@@ -1,0 +1,19 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "dev.sandboxapis/mcp",
+  "title": "SandboxAPIs",
+  "description": "Drop-in read-only replicas of GitHub, Jira, Slack and 18 more, preloaded with one fake company.",
+  "version": "0.3.14",
+  "websiteUrl": "https://sandboxapis.dev/docs/mcp",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@sandboxapis/mcp",
+      "version": "0.3.14",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

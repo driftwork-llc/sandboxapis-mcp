@@ -1,0 +1,88 @@
+{
+  "name": "@sandboxapis/mcp",
+  "version": "0.3.14",
+  "mcpName": "dev.sandboxapis/mcp",
+  "type": "module",
+  "description": "MCP server for SandboxAPIs — read-only, API-compatible replicas of 21 developer and SaaS APIs (GitHub, GitLab, Jira, Linear, Slack, Sentry, PagerDuty, Salesforce, CircleCI, OpenAI, Anthropic and more), preloaded with one realistic simulated data set.",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "modelcontextprotocol",
+    "mcp-server",
+    "ai-agents",
+    "agent-tools",
+    "claude",
+    "sandbox",
+    "test-data",
+    "fixtures",
+    "github",
+    "gitlab",
+    "bitbucket",
+    "azure-devops",
+    "jira",
+    "linear",
+    "slack",
+    "microsoft-teams",
+    "sentry",
+    "pagerduty",
+    "statuspage",
+    "salesforce",
+    "hubspot",
+    "zendesk",
+    "circleci",
+    "buildkite",
+    "anthropic",
+    "openai",
+    "cursor",
+    "devin",
+    "chatgpt"
+  ],
+  "homepage": "https://sandboxapis.dev/docs/mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/driftwork-llc/sandboxapis-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/driftwork-llc/sandboxapis-mcp/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "sandboxapis-mcp": "./bundle/stdio.js"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "bundle",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": "./bundle/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "bundle": "node build.mjs",
+    "prepack": "node build.mjs",
+    "start": "tsx src/stdio.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "@types/node": "^22.10.2"
+  }
+}
