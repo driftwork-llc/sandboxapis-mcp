@@ -1,0 +1,27 @@
+# The public repository's own check. This is NOT the SandboxAPIs monorepo CI:
+# that one tests the server against the private renderers and the data set.
+# This one proves what a stranger cloning this repository gets: it installs,
+# typechecks, passes its self-contained tests, bundles, and the bundle answers
+# the MCP handshake over stdio.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    # Install + typecheck + tests + bundle run in about a minute; ten is headroom.
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run bundle
+      - run: node scripts/handshake.mjs
