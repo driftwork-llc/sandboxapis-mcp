@@ -104,7 +104,7 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
         // cannot find a tool for it will assume the tool list is stale. When
         // `list_issues` learns to merge and `create_issue` appears, this
         // sentence is what changes.
-        "Writes: this server is READ-ONLY, including for a scratch-enabled key — the scratch layer (a per-key, 24-hour overlay on GitHub issues and issue comments) is a REST feature, so use the GitHub base URL above with your key for it, and expect the tools here to answer from the shared data set alone.",
+        "Writes: this server is READ-ONLY, including for a scratch-enabled key — the scratch layer (a per-key, 24-hour overlay: GitHub issues and issue comments, Jira comments and transitions, and Slack messages into existing channels) is a REST feature, so use the GitHub, Jira or Slack base URL above with your key for it, and expect the tools here to answer from the shared data set alone.",
       inputSchema: {},
     },
     async () => json(await buildOrientation(u)),
