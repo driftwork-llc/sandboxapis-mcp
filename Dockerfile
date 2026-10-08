@@ -20,7 +20,7 @@ FROM node:22-alpine
 
 # Pinned on purpose. An MCP catalog entry that floats on `latest` changes what it
 # serves without anybody reviewing the change.
-ARG MCP_VERSION=0.3.14
+ARG MCP_VERSION=0.3.15
 
 RUN npm install -g "@sandboxapis/mcp@${MCP_VERSION}" \
   && npm cache clean --force

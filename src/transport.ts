@@ -12,6 +12,7 @@
 
 import type { McpConfig } from "./config.js";
 import type { Provider } from "./provider-ids.js";
+import { SERVER_VERSION } from "./server.js";
 
 /**
  * The response headers a TOOL RESULT can be built from — a small, typed subset,
@@ -152,7 +153,11 @@ export function httpTransport(cfg: McpConfig, opts: HttpTransportOptions = {}): 
   const doFetch = opts.fetchImpl ?? fetch;
   const headersFor = (provider: Provider): Record<string, string> => ({
     accept: "application/json",
-    "user-agent": "sandboxapis-mcp",
+    // `sandboxapis-mcp/<version>` — the same version the `initialize` handshake
+    // announces. The gateway files this prefix as its own client class, "mcp"
+    // (packages/gateway/src/client-class.ts), so `pnpm traffic` can count
+    // agents; the bare token used to fall through to "unknown".
+    "user-agent": `sandboxapis-mcp/${SERVER_VERSION}`,
     ...(opts.apiKey ? authHeaders(provider, opts.apiKey) : {}),
   });
 

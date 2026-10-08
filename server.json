@@ -3,14 +3,14 @@
   "name": "dev.sandboxapis/mcp",
   "title": "SandboxAPIs",
   "description": "Drop-in read-only replicas of GitHub, Jira, Slack and 18 more, preloaded with one fake company.",
-  "version": "0.3.14",
+  "version": "0.3.15",
   "websiteUrl": "https://sandboxapis.dev/docs/mcp",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@sandboxapis/mcp",
-      "version": "0.3.14",
+      "version": "0.3.15",
       "transport": {
         "type": "stdio"
       }
