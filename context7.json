@@ -1,0 +1,16 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "url": "https://context7.com/driftwork-llc/sandboxapis-mcp",
+  "public_key": "pk_OFKpIhydm48mN8IQA27i7",
+  "projectTitle": "SandboxAPIs MCP server",
+  "description": "The SandboxAPIs MCP server: read-only, API-compatible replicas of 21 developer APIs, preloaded with one simulated company, for testing agents without a test account.",
+  "excludeFolders": [
+    "src"
+  ],
+  "rules": [
+    "Call the orient tool first; it returns every base URL, the pinned hosts and the remaining request budget.",
+    "Every host is read-only. A write returns the provider's own error shape naming what was attempted.",
+    "For CI and evals, use a pinned snapshot host, never the live host: the live data set re-rolls daily.",
+    "Anonymous callers get 60 requests an hour per address; set SANDBOXAPIS_API_KEY for 600."
+  ]
+}

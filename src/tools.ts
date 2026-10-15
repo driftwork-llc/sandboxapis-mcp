@@ -8,7 +8,7 @@ import { PROVIDER_IDS } from "./provider-ids.js";
 import { snapshotBaseUrl } from "./config.js";
 import { buildOrientation } from "./discovery.js";
 import { mcpProviderById } from "./providers.js";
-import { BUDGET_PATH, BUDGET_PROVIDER, readBudget, resetsInSeconds, upgradeUrlFor } from "./budget.js";
+import { BUDGET_PATH, BUDGET_PROVIDER, keyRemedy, readBudget, resetsInSeconds, upgradeUrlFor } from "./budget.js";
 import type { McpUniverse, Provider, RestResult } from "./universe.js";
 
 const providerArg = z.enum(PROVIDER_IDS as unknown as [Provider, ...Provider[]]);
@@ -164,7 +164,9 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
         readPath: BUDGET_PATH,
         note: budget.keyed
           ? "One shared hourly window across every provider host. A refusal carries `upgrade` in the tool result with the rung that refused and where to go next."
-          : "One shared hourly window across every provider host. Set SANDBOXAPIS_API_KEY on this MCP server to raise it.",
+          : budget.remote === true
+            ? `One shared hourly window across every provider host. To raise it, ${keyRemedy(true)}.`
+            : "One shared hourly window across every provider host. Set SANDBOXAPIS_API_KEY on this MCP server to raise it.",
       });
     },
   );

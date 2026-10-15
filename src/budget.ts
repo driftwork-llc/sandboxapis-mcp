@@ -20,7 +20,7 @@
 // "60" written from a constant would be exactly the placeholder invariant #4
 // forbids: an agent would pace itself against a figure nobody enforced.
 
-import { ANON_HOURLY_LIMIT, FREE_HOURLY_LIMIT, PRICING_URL, UPGRADE_URL_ANONYMOUS } from "./config.js";
+import { ANON_HOURLY_LIMIT, KEY_BUYS, KEY_REMEDY_REMOTE, KEY_REMEDY_STDIO, PRICING_URL, UPGRADE_URL_ANONYMOUS } from "./config.js";
 import type { McpUniverse } from "./universe.js";
 
 /** The provider host the budget is read from: the only dialect whose budget
@@ -46,8 +46,11 @@ export interface BudgetNumbers {
 }
 
 export interface Budget {
-  /** Was this server started with a key (`SANDBOXAPIS_API_KEY`)? */
+  /** Was this server started with a key (`SANDBOXAPIS_API_KEY`, or a Bearer
+   *  key on the hosted endpoint)? */
   keyed: boolean;
+  /** The hosted endpoint rather than the npm package. Present only when true. */
+  remote?: true;
   /** Absent when the read failed — never guessed. */
   numbers?: BudgetNumbers;
   /** Why the numbers are absent, for the caller's `note`. Absent when they are present. */
@@ -68,9 +71,10 @@ const num = (value: unknown): number | undefined => (typeof value === "number" &
  */
 export async function readBudget(u: McpUniverse): Promise<Budget> {
   const keyed = u.keyed;
+  const where = u.remote ? ({ remote: true } as const) : {};
   const res = await u.restGet(BUDGET_PROVIDER, BUDGET_PATH);
   if (!res.ok) {
-    return { keyed, unavailable: `GET ${BUDGET_PATH} on the ${BUDGET_PROVIDER} host answered ${res.status}` };
+    return { keyed, ...where, unavailable: `GET ${BUDGET_PATH} on the ${BUDGET_PROVIDER} host answered ${res.status}` };
   }
   // `resources.core` rather than `rate`: `rate` is the deprecated alias in
   // GitHub's own schema, and every resource name reports the same enforced
@@ -80,9 +84,9 @@ export async function readBudget(u: McpUniverse): Promise<Budget> {
   const remaining = num(core?.remaining);
   const reset = num(core?.reset);
   if (limit === undefined || remaining === undefined || reset === undefined) {
-    return { keyed, unavailable: `GET ${BUDGET_PATH} answered without a numeric resources.core` };
+    return { keyed, ...where, unavailable: `GET ${BUDGET_PATH} answered without a numeric resources.core` };
   }
-  return { keyed, numbers: { limit, remaining, reset } };
+  return { keyed, ...where, numbers: { limit, remaining, reset } };
 }
 
 /** The upgrade destination for a caller in this state.
@@ -96,12 +100,18 @@ export function upgradeUrlFor(keyed: boolean): string {
   return keyed ? PRICING_URL : UPGRADE_URL_ANONYMOUS;
 }
 
+/** How THIS server takes a key: the env var (npm package) or the Bearer
+ *  header (hosted endpoint). config.ts `KEY_REMEDY_*`. */
+export function keyRemedy(remote: boolean): string {
+  return remote ? KEY_REMEDY_REMOTE : KEY_REMEDY_STDIO;
+}
+
 /** One sentence an agent can act on, and never a number nobody enforced. */
 export function budgetNote(budget: Budget): string {
   if (!budget.keyed) {
     const anonymous =
       `Anonymous: ${n(ANON_HOURLY_LIMIT)} requests/hour shared across every provider host; ` +
-      `set SANDBOXAPIS_API_KEY to a free key for ${n(FREE_HOURLY_LIMIT)}/hour.`;
+      `${keyRemedy(budget.remote === true)} ${KEY_BUYS}.`;
     // The sentence itself quotes the PUBLISHED rung, which is true either way;
     // what a failed read costs is `limit`/`remaining`/`reset`, and saying so is
     // the difference between "no live count" and a fabricated one.

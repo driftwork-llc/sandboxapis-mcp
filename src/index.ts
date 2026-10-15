@@ -6,12 +6,21 @@
 
 export const packageName = "@sandboxapis/mcp" as const;
 
-export { createSandboxMcpServer } from "./server.js";
+// SERVER_VERSION: the gateway's hosted endpoint (packages/gateway/src/mcp-route.ts)
+// announces it in the User-Agent of every request it makes on a caller's behalf.
+export {
+  createSandboxMcpServer,
+  SERVER_VERSION,
+  SERVER_DESCRIPTION,
+  SERVER_TITLE,
+  SERVER_WEBSITE_URL,
+  SERVER_REPOSITORY_URL,
+} from "./server.js";
 export { McpUniverse, type McpUniverseDeps, type Provider } from "./universe.js";
 export { registerTools } from "./tools.js";
 export { buildOrientation, type Orientation } from "./discovery.js";
 export { computeEntryPoints, type EntryPoint, type EntryPointContext } from "./entrypoints.js";
-export { httpTransport, readHints, type McpTransport, type RestResult, type ResponseHints, type HttpTransportOptions } from "./transport.js";
+export { httpTransport, readHints, authHeaders, type McpTransport, type RestResult, type ResponseHints, type HttpTransportOptions } from "./transport.js";
 // The upsell path an agent can act on: `upgrade` on a refused tool result, the
 // `access` block orient states up front, and the free budget read behind both.
 export { type UpgradeHint } from "./tools.js";
@@ -19,6 +28,7 @@ export {
   readBudget,
   toAccess,
   budgetNote,
+  keyRemedy,
   upgradeUrlFor,
   resetsInSeconds,
   BUDGET_PATH,
@@ -55,4 +65,12 @@ export { DEFAULT_CONFIG, resolveConfig, snapshotBaseUrl, type McpConfig, type Sn
 // The two rung figures this thin client restates because it cannot import the
 // gateway; packages/conformance/src/ci/mcp-budget-parity.test.ts is the only
 // project that can see both copies and pins them together.
-export { ANON_HOURLY_LIMIT, FREE_HOURLY_LIMIT, UPGRADE_URL_ANONYMOUS, PRICING_URL } from "./config.js";
+export {
+  ANON_HOURLY_LIMIT,
+  FREE_HOURLY_LIMIT,
+  UPGRADE_URL_ANONYMOUS,
+  PRICING_URL,
+  KEY_REMEDY_STDIO,
+  KEY_REMEDY_REMOTE,
+  KEY_BUYS,
+} from "./config.js";

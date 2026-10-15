@@ -671,3 +671,23 @@ export const UPGRADE_URL_ANONYMOUS = "https://sandboxapis.dev/upgrade?from=anony
  *  hourly number would be an invented fact, which invariant #4 forbids. The
  *  plans page states every rung honestly instead. */
 export const PRICING_URL = "https://sandboxapis.dev/pricing";
+
+/**
+ * How an unkeyed caller gives THIS server a key, in the words a sentence opens
+ * with. Two ways, because there are two servers: the npm package reads an
+ * environment variable its operator sets, and the hosted endpoint
+ * (`https://api.sandboxapis.dev/mcp`) reads the Authorization header the
+ * connector sends. A remote user has no environment to set, so telling them to
+ * set one names a remedy they cannot perform.
+ *
+ * The gateway's over-limit sentences (ladder.ts `anonymousMcp` and
+ * `anonymousMcpRemote`) carry the same words, capitalised; the parity test in
+ * packages/conformance/src/ci/mcp-budget-parity.test.ts holds the copies together.
+ */
+export const KEY_REMEDY_STDIO = "set SANDBOXAPIS_API_KEY to a free key";
+export const KEY_REMEDY_REMOTE = "send a free key as Authorization: Bearer sk_live_… on the MCP endpoint";
+
+/** What a free key buys, after the remedy: the hourly figure and the one
+ *  capability an agent can use with no code change. Scratch writes are opt-in
+ *  per key, from the dashboard, so the clause says "opt-in". */
+export const KEY_BUYS = `for ${FREE_HOURLY_LIMIT.toLocaleString("en-US")}/hour and opt-in scratch writes`;

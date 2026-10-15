@@ -31,7 +31,7 @@ const rateLimitBody = (limit: number, remaining: number, reset: number): unknown
  *  a whole gateway response — status, body AND headers — in one place. */
 function stubTransport(
   routes: Record<string, { status: number; body: unknown; headers?: Record<string, string> }>,
-  opts: { keyed?: boolean } = {},
+  opts: { keyed?: boolean; remote?: boolean } = {},
 ): McpTransport {
   const answer = (path: string): RestResult => {
     const hit = routes[path] ?? { status: 404, body: { message: "Not Found" } };
@@ -44,6 +44,7 @@ function stubTransport(
   };
   return {
     ...(opts.keyed === undefined ? {} : { keyed: opts.keyed }),
+    ...(opts.remote === undefined ? {} : { remote: opts.remote }),
     restGet: (_provider, path) => Promise.resolve(answer(path)),
     gqlPost: (_provider) => Promise.resolve(answer("/graphql")),
   };
@@ -57,7 +58,7 @@ const REFUSED = {
   body: {
     message:
       "API rate limit exceeded. This MCP server is running without a key (60 requests/hour). " +
-      "Set SANDBOXAPIS_API_KEY to a free key for 600/hour — https://sandboxapis.dev/upgrade?from=anonymous",
+      "Set SANDBOXAPIS_API_KEY to a free key for 600/hour and opt-in scratch writes — https://sandboxapis.dev/upgrade?from=anonymous",
     documentation_url: "https://sandboxapis.dev/upgrade?from=anonymous",
     status: "403",
   },
@@ -209,8 +210,23 @@ describe("B — orient states the budget up front", () => {
       upgradeUrl: UPGRADE_URL_ANONYMOUS,
       note:
         `Anonymous: ${ANON_HOURLY_LIMIT} requests/hour shared across every provider host; ` +
-        `set SANDBOXAPIS_API_KEY to a free key for ${FREE_HOURLY_LIMIT}/hour.`,
+        `set SANDBOXAPIS_API_KEY to a free key for ${FREE_HOURLY_LIMIT}/hour and opt-in scratch writes.`,
     });
+  });
+
+  it("an UNKEYED hosted endpoint names the header, not the environment variable", async () => {
+    const u = new McpUniverse({
+      transport: stubTransport(
+        { ...orgRoutes, "/rate_limit": { status: 200, body: rateLimitBody(60, 12, NOW_SEC + 900) } },
+        { keyed: false, remote: true },
+      ),
+    });
+    const o = await buildOrientation(u);
+    expect(o.access.note).toBe(
+      `Anonymous: ${ANON_HOURLY_LIMIT} requests/hour shared across every provider host; ` +
+        `send a free key as Authorization: Bearer sk_live_… on the MCP endpoint for ${FREE_HOURLY_LIMIT}/hour and opt-in scratch writes.`,
+    );
+    expect(o.access.note).not.toContain("SANDBOXAPIS_API_KEY");
   });
 
   it("a KEYED server reports its real limit and points at the plans page, not a guessed rung", async () => {

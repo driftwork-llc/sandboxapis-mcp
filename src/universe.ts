@@ -35,6 +35,12 @@ export class McpUniverse {
     return this.transport.keyed ?? false;
   }
 
+  /** Is this the hosted endpoint rather than the npm package? Only the
+   *  wording of "how to supply a key" reads it (budget.ts `keyRemedy`). */
+  get remote(): boolean {
+    return this.transport.remote ?? false;
+  }
+
   /** Fetch a provider REST path — identical to what the live API serves. */
   restGet(provider: Provider, path: string): Promise<RestResult> {
     return this.transport.restGet(provider, path);

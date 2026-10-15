@@ -67,14 +67,25 @@ export interface McpTransport {
    * BEFORE a loop rather than at request 61. Absent means unkeyed.
    */
   readonly keyed?: boolean;
+  /**
+   * Is this the HOSTED endpoint's transport (packages/gateway/src/mcp-route.ts)
+   * rather than the npm package's? It decides one thing: how an unkeyed agent
+   * is told to supply a key (config.ts `KEY_REMEDY_REMOTE`, not the environment
+   * variable). Absent means the stdio package.
+   */
+  readonly remote?: boolean;
 }
 
 /**
  * Each provider's own credential convention — the exact header a real client
  * for that provider would send. Dogfooding again: the key travels the way the
  * docs tell a human to send it, so anything that works here works there.
+ *
+ * Exported for the gateway's hosted endpoint (packages/gateway/src/mcp-route.ts),
+ * which puts a remote caller's key in the same slot this package puts
+ * `SANDBOXAPIS_API_KEY` in, so the two paths cannot drift apart.
  */
-function authHeaders(provider: Provider, apiKey: string): Record<string, string> {
+export function authHeaders(provider: Provider, apiKey: string): Record<string, string> {
   switch (provider) {
     case "gitlab":
       return { "private-token": apiKey };
