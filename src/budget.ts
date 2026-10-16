@@ -20,7 +20,17 @@
 // "60" written from a constant would be exactly the placeholder invariant #4
 // forbids: an agent would pace itself against a figure nobody enforced.
 
-import { ANON_HOURLY_LIMIT, KEY_BUYS, KEY_REMEDY_REMOTE, KEY_REMEDY_STDIO, PRICING_URL, UPGRADE_URL_ANONYMOUS } from "./config.js";
+import {
+  ANON_HOURLY_LIMIT,
+  FREE_HOURLY_LIMIT,
+  KEY_BUYS,
+  KEY_REMEDY_REMOTE,
+  KEY_REMEDY_STDIO,
+  LOGIN_URL,
+  MCP_SIGN_IN_URL,
+  PRICING_URL,
+  UPGRADE_URL_ANONYMOUS,
+} from "./config.js";
 import type { McpUniverse } from "./universe.js";
 
 /** The provider host the budget is read from: the only dialect whose budget
@@ -130,6 +140,36 @@ export function budgetNote(budget: Budget): string {
  *  has rolled and the answer is 0, not a negative countdown. */
 export function resetsInSeconds(reset: number, nowMs: number): number {
   return Math.max(0, reset - Math.floor(nowMs / 1000));
+}
+
+/**
+ * The sentence an ANONYMOUS over-limit refusal on the HOSTED endpoint leads
+ * with (tools.ts `refusable`, the `message` field).
+ *
+ * WHY IT IS PROSE IN THE RESULT. ChatGPT reads the linking challenge in
+ * `_meta`; Claude ignores `_meta`, so for a Claude user this sentence is the
+ * only thing that says what to do. It states the wait, what a free account
+ * buys, and the two ways to get it: the signed-in address in Claude, a key
+ * anywhere else. decisions/2026-10-15-1924-mcp-auth-address.md.
+ *
+ * THE WAIT IS THE GATEWAY'S, NEVER GUESSED. It is the refusal's own
+ * `retry-after` (UpgradeHint `retryAfterSeconds`), which the gateway computes
+ * from the same window that refused. Rounded UP to whole minutes, so the
+ * caller is never told to come back before the window rolls. With no
+ * `retry-after` the sentence says the window is hourly and gives no number.
+ */
+export function hostedAnonymousRefusalMessage(retryAfterSeconds: number | undefined): string {
+  const minutes = retryAfterSeconds === undefined ? undefined : Math.max(1, Math.ceil(retryAfterSeconds / 60));
+  const wait =
+    minutes === undefined
+      ? "It resets when the hourly window rolls over."
+      : `It resets in about ${minutes} minute${minutes === 1 ? "" : "s"}.`;
+  return (
+    `The anonymous budget on this endpoint is spent (${n(ANON_HOURLY_LIMIT)} requests an hour per address). ${wait} ` +
+    `A free SandboxAPIs account gives ${n(FREE_HOURLY_LIMIT)} requests an hour. ` +
+    `In Claude, reconnect this connector to ${MCP_SIGN_IN_URL} with "Sign in now". ` +
+    `Anywhere else, create a free key at ${LOGIN_URL} and send it as Authorization: Bearer sk_live_… on the MCP endpoint.`
+  );
 }
 
 /**

@@ -15,8 +15,19 @@ import { createSandboxMcpServer } from "./server.js";
 import { buildOrientation } from "./discovery.js";
 import { McpUniverse } from "./universe.js";
 import { readHints, type McpTransport, type RestResult } from "./transport.js";
-import { ANON_HOURLY_LIMIT, FREE_HOURLY_LIMIT, PRICING_URL, UPGRADE_URL_ANONYMOUS } from "./config.js";
-import { readBudget, resetsInSeconds, toAccess } from "./budget.js";
+import {
+  ANON_HOURLY_LIMIT,
+  DEFAULT_CONFIG,
+  FREE_HOURLY_LIMIT,
+  LINK_ACCOUNT_DESCRIPTION,
+  LOGIN_URL,
+  MCP_SIGN_IN_URL,
+  OAUTH_SCOPE,
+  PRICING_URL,
+  UPGRADE_URL_ANONYMOUS,
+  type McpConfig,
+} from "./config.js";
+import { hostedAnonymousRefusalMessage, readBudget, resetsInSeconds, toAccess } from "./budget.js";
 
 const NOW_SEC = 1_900_000_000;
 
@@ -340,5 +351,107 @@ describe("C — check_budget", () => {
     // Still useful: the two facts that do not depend on the read.
     expect(p["keyed"]).toBe(false);
     expect(p["upgradeUrl"]).toBe(UPGRADE_URL_ANONYMOUS);
+  });
+});
+
+describe("F — OAuth metadata: the hosted endpoint declares it, the stdio package does not", () => {
+  const METADATA = "https://api.sandboxapis.dev/.well-known/oauth-protected-resource";
+
+  async function connectWith(transport: McpTransport, config: Partial<McpConfig> = {}): Promise<Client> {
+    const { server } = createSandboxMcpServer({ transport, config });
+    const client = new Client({ name: "oauth-meta-test", version: "1.0.0" });
+    const [a, b] = InMemoryTransport.createLinkedPair();
+    await Promise.all([server.connect(b), client.connect(a)]);
+    return client;
+  }
+
+  it("with no metadata URL (the stdio package's DEFAULT_CONFIG) no tool carries _meta and no refusal a linking challenge", async () => {
+    expect(DEFAULT_CONFIG.oauthResourceMetadataUrl).toBeUndefined();
+    const client = await connectWith(stubTransport({ "/users/athena": REFUSED }));
+    const { tools } = await client.listTools();
+    expect(tools).toHaveLength(10);
+    for (const t of tools) expect(t._meta, t.name).toBeUndefined();
+    const refused = await client.callTool({ name: "get_user", arguments: { provider: "github", login: "athena" } });
+    expect(refused.isError).toBe(true);
+    expect(refused._meta).toBeUndefined();
+  });
+
+  it("with one, every tool declares noauth + oauth2 and an anonymous refusal carries mcp/www_authenticate", async () => {
+    const client = await connectWith(stubTransport({ "/users/athena": REFUSED }, { remote: true }), { oauthResourceMetadataUrl: METADATA });
+    const { tools } = await client.listTools();
+    for (const t of tools) {
+      expect(t._meta?.["securitySchemes"], t.name).toEqual([{ type: "noauth" }, { type: "oauth2", scopes: [OAUTH_SCOPE] }]);
+    }
+    const refused = await client.callTool({ name: "get_user", arguments: { provider: "github", login: "athena" } });
+    expect(refused._meta).toEqual({
+      "mcp/www_authenticate": [
+        `Bearer resource_metadata="${METADATA}", error="insufficient_scope", error_description="${LINK_ACCOUNT_DESCRIPTION}"`,
+      ],
+    });
+    // The upgrade block is still there beside it.
+    expect(payload(refused)["upgrade"]).toMatchObject({ tier: "anonymous" });
+  });
+
+  it("a keyed refusal, a non-budget error and a success carry none", async () => {
+    const keyedRefusal = { ...REFUSED, headers: { "x-sandboxapis-tier": "free", "x-sandboxapis-upgrade": "https://sandboxapis.dev/upgrade?from=free" } };
+    const keyed = await connectWith(stubTransport({ "/users/athena": keyedRefusal }, { keyed: true, remote: true }), { oauthResourceMetadataUrl: METADATA });
+    expect((await keyed.callTool({ name: "get_user", arguments: { provider: "github", login: "athena" } }))._meta).toBeUndefined();
+    const anon = await connectWith(
+      stubTransport({ "/users/nobody": { status: 404, body: { message: "Not Found" } }, "/users/athena": { status: 200, body: { login: "athena" } } }, { remote: true }),
+      { oauthResourceMetadataUrl: METADATA },
+    );
+    expect((await anon.callTool({ name: "get_user", arguments: { provider: "github", login: "nobody" } }))._meta).toBeUndefined();
+    expect((await anon.callTool({ name: "get_user", arguments: { provider: "github", login: "athena" } }))._meta).toBeUndefined();
+  });
+});
+
+describe("G — the anonymous refusal on the HOSTED endpoint says what to do, in words (decisions/2026-10-15-1924-mcp-auth-address.md)", () => {
+  const METADATA = "https://api.sandboxapis.dev/.well-known/oauth-protected-resource";
+
+  async function call(transport: McpTransport, config: Partial<McpConfig> = {}) {
+    const { server } = createSandboxMcpServer({ transport, config });
+    const client = new Client({ name: "hosted-refusal-test", version: "1.0.0" });
+    const [a, b] = InMemoryTransport.createLinkedPair();
+    await Promise.all([server.connect(b), client.connect(a)]);
+    return client.callTool({ name: "get_user", arguments: { provider: "github", login: "athena" } });
+  }
+
+  it("leads with the wait, the free figure, the /mcp/auth address and the login URL; upgrade and _meta unchanged", async () => {
+    const refused = await call(stubTransport({ "/users/athena": REFUSED }, { remote: true }), { oauthResourceMetadataUrl: METADATA });
+    expect(refused.isError).toBe(true);
+    const text = (refused.content as Array<{ text: string }>)[0]!.text;
+    const p = JSON.parse(text) as Record<string, unknown>;
+    expect(Object.keys(p)[0]).toBe("message");
+    const message = p["message"] as string;
+    expect(message).toContain("It resets in about 10 minutes.");
+    expect(message).toContain(`${FREE_HOURLY_LIMIT} requests an hour`);
+    expect(message).toContain(`reconnect this connector to ${MCP_SIGN_IN_URL} with "Sign in now"`);
+    expect(MCP_SIGN_IN_URL).toBe("https://api.sandboxapis.dev/mcp/auth");
+    expect(message).toContain(`create a free key at ${LOGIN_URL}`);
+    expect(LOGIN_URL).toBe("https://sandboxapis.dev/login");
+    expect(message).not.toMatch(/—/);
+    expect(p["upgrade"]).toEqual({ tier: "anonymous", url: UPGRADE_URL_ANONYMOUS, retryAfterSeconds: 600 });
+    expect(refused._meta).toEqual({
+      "mcp/www_authenticate": [`Bearer resource_metadata="${METADATA}", error="insufficient_scope", error_description="${LINK_ACCOUNT_DESCRIPTION}"`],
+    });
+  });
+
+  it("rounds the wait up to whole minutes and never invents one", () => {
+    expect(hostedAnonymousRefusalMessage(1)).toContain("about 1 minute.");
+    expect(hostedAnonymousRefusalMessage(61)).toContain("about 2 minutes.");
+    expect(hostedAnonymousRefusalMessage(3600)).toContain("about 60 minutes.");
+    const none = hostedAnonymousRefusalMessage(undefined);
+    expect(none).toContain("It resets when the hourly window rolls over.");
+    expect(none).not.toMatch(/about \d/);
+  });
+
+  it("the stdio refusal and a keyed hosted refusal are exactly as before: no message", async () => {
+    const stdio = await call(stubTransport({ "/users/athena": REFUSED }));
+    expect(Object.keys(payload(stdio))).toEqual(["provider", "path", "status", "body", "upgrade"]);
+    expect(JSON.stringify(payload(stdio))).toContain("Set SANDBOXAPIS_API_KEY");
+    const keyedRefusal = { ...REFUSED, headers: { "x-sandboxapis-tier": "free", "x-sandboxapis-upgrade": "https://sandboxapis.dev/upgrade?from=free" } };
+    const keyed = await call(stubTransport({ "/users/athena": keyedRefusal }, { keyed: true, remote: true }), { oauthResourceMetadataUrl: METADATA });
+    expect(Object.keys(payload(keyed))).toEqual(["provider", "path", "status", "body", "upgrade"]);
+    expect(payload(keyed)["upgrade"]).toEqual({ tier: "free", url: "https://sandboxapis.dev/upgrade?from=free" });
   });
 });

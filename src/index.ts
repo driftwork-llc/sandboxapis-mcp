@@ -23,7 +23,7 @@ export { computeEntryPoints, type EntryPoint, type EntryPointContext } from "./e
 export { httpTransport, readHints, authHeaders, type McpTransport, type RestResult, type ResponseHints, type HttpTransportOptions } from "./transport.js";
 // The upsell path an agent can act on: `upgrade` on a refused tool result, the
 // `access` block orient states up front, and the free budget read behind both.
-export { type UpgradeHint } from "./tools.js";
+export { type UpgradeHint, securitySchemesFor, authChallengeMeta, WWW_AUTHENTICATE_META_KEY } from "./tools.js";
 export {
   readBudget,
   toAccess,
@@ -72,5 +72,9 @@ export {
   PRICING_URL,
   KEY_REMEDY_STDIO,
   KEY_REMEDY_REMOTE,
+  MCP_SIGN_IN_URL,
+  LOGIN_URL,
   KEY_BUYS,
+  OAUTH_SCOPE,
+  LINK_ACCOUNT_DESCRIPTION,
 } from "./config.js";

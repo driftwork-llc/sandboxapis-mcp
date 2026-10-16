@@ -5,10 +5,10 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { PROVIDER_IDS } from "./provider-ids.js";
-import { snapshotBaseUrl } from "./config.js";
+import { LINK_ACCOUNT_DESCRIPTION, OAUTH_SCOPE, snapshotBaseUrl, type McpConfig } from "./config.js";
 import { buildOrientation } from "./discovery.js";
 import { mcpProviderById } from "./providers.js";
-import { BUDGET_PATH, BUDGET_PROVIDER, keyRemedy, readBudget, resetsInSeconds, upgradeUrlFor } from "./budget.js";
+import { BUDGET_PATH, BUDGET_PROVIDER, hostedAnonymousRefusalMessage, keyRemedy, readBudget, resetsInSeconds, upgradeUrlFor } from "./budget.js";
 import type { McpUniverse, Provider, RestResult } from "./universe.js";
 
 const providerArg = z.enum(PROVIDER_IDS as unknown as [Provider, ...Provider[]]);
@@ -16,6 +16,65 @@ const providerArg = z.enum(PROVIDER_IDS as unknown as [Provider, ...Provider[]])
 /** Wrap any JSON-able payload as a tool result. */
 function json(payload: unknown, isError = false): CallToolResult {
   return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }], isError };
+}
+
+// ---- OAuth, in the dialect OpenAI's Apps SDK reads --------------------------
+//
+// Two OpenAI extensions, neither in the MCP spec (design §2 and §10,
+// decisions/2026-10-14-1849-oauth-on-the-hosted-mcp-endpoint-design.md). Both
+// are emitted ONLY when the config names a protected-resource metadata URL,
+// which only the hosted endpoint's does (`McpConfig.oauthResourceMetadataUrl`):
+// the stdio package has no endpoint to authorise against, so it advertises no
+// oauth2 scheme and no linking challenge, and its tool list is unchanged.
+
+/** The `_meta` key a tool result carries an RFC 7235 challenge under, to open
+ *  ChatGPT's account-linking UI (developers.openai.com/apps-sdk/build/auth). */
+export const WWW_AUTHENTICATE_META_KEY = "mcp/www_authenticate";
+
+/**
+ * Per-tool `securitySchemes`: anonymous works, linking an account raises the
+ * budget, so every tool declares both.
+ *
+ * UNDER `_meta`, NOT AT THE TOP LEVEL. OpenAI documents a top-level
+ * `securitySchemes` field on the tool descriptor, with `_meta.securitySchemes`
+ * as the "back-compat mirror for clients that only read _meta". The MCP SDK's
+ * `tools/list` handler builds each descriptor from a fixed field list (name,
+ * title, description, inputSchema, annotations, execution, _meta) and drops
+ * anything else, and replacing that handler would mean reaching into the
+ * SDK's private request-handler map. So the mirror is the one emitted.
+ */
+export function securitySchemesFor(cfg: McpConfig): { _meta: { securitySchemes: Array<Record<string, unknown>> } } | Record<string, never> {
+  if (cfg.oauthResourceMetadataUrl === undefined) return {};
+  return { _meta: { securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: [OAUTH_SCOPE] }] } };
+}
+
+/**
+ * The linking challenge an ANONYMOUS over-limit refusal carries on the hosted
+ * endpoint, beside `upgrade`. OpenAI's documented shape: an array of
+ * `WWW-Authenticate` values, each with `resource_metadata`, `error` and
+ * `error_description`. Undefined for a keyed refusal (linking would change
+ * nothing: the caller already draws on a key), for any result that is not an
+ * over-limit refusal, and on the stdio package.
+ */
+export function authChallengeMeta(cfg: McpConfig, keyed: boolean, upgrade: UpgradeHint | undefined): Record<string, unknown> | undefined {
+  if (cfg.oauthResourceMetadataUrl === undefined || keyed || upgrade?.tier !== "anonymous") return undefined;
+  return {
+    [WWW_AUTHENTICATE_META_KEY]: [
+      `Bearer resource_metadata="${cfg.oauthResourceMetadataUrl}", error="insufficient_scope", error_description="${LINK_ACCOUNT_DESCRIPTION}"`,
+    ],
+  };
+}
+
+/** A tool result built from a provider response: the payload, plus the linking
+ *  challenge when `authChallengeMeta` says the refusal earns one, plus, for an
+ *  ANONYMOUS over-limit refusal on the HOSTED endpoint only, a leading
+ *  `message` in plain words (budget.ts `hostedAnonymousRefusalMessage`). The
+ *  stdio package (not `remote`) and every keyed refusal are unchanged. */
+function refusable(u: McpUniverse, payload: Record<string, unknown> & { upgrade?: UpgradeHint }, isError: boolean): CallToolResult {
+  const hostedAnonymous = u.remote && !u.keyed && payload.upgrade?.tier === "anonymous";
+  const result = json(hostedAnonymous ? { message: hostedAnonymousRefusalMessage(payload.upgrade?.retryAfterSeconds), ...payload } : payload, isError);
+  const meta = authChallengeMeta(u.config, u.keyed, payload.upgrade);
+  return meta ? { ...result, _meta: meta } : result;
 }
 
 /** Tracker providers (Jira/Linear) have no git surfaces — git-shaped tools
@@ -85,16 +144,20 @@ function hintsOf(r: RestResult): { upgrade?: UpgradeHint; coverage?: string } {
  *  plus `upgrade`/`coverage` when the refusal carried one. */
 async function passthrough(u: McpUniverse, provider: Provider, path: string): Promise<CallToolResult> {
   const r = await u.restGet(provider, path);
-  return json({ provider, path, status: r.status, body: r.body, ...hintsOf(r) }, !r.ok);
+  return refusable(u, { provider, path, status: r.status, body: r.body, ...hintsOf(r) }, !r.ok);
 }
 
 export function registerTools(server: McpServer, u: McpUniverse): void {
   const cfg = u.config;
+  // Spread into every registration below: `_meta.securitySchemes` on the
+  // hosted endpoint, nothing at all on the stdio package.
+  const toolMeta = securitySchemesFor(cfg);
 
   // ---- Discovery ----------------------------------------------------------
   server.registerTool(
     "orient",
     {
+      ...toolMeta,
       title: "Orient in the SandboxAPIs universe",
       description:
         "START HERE. Returns everything needed to use SandboxAPIs with no docs: the universe/theme, every API surface and its base URL (git hosts and issue trackers), live-vs-snapshot modes and how to pin, the org and its teams/repos, notable entry points (each with a ready-to-run REST path), where the coverage manifest lives, and this server's access block — whether a key is set and how many requests are left this hour. " +
@@ -120,6 +183,7 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
   server.registerTool(
     "check_budget",
     {
+      ...toolMeta,
       title: "Check the remaining request budget",
       description:
         "Costs nothing — call it before any loop of more than a handful of requests. Returns this server's real hourly window (limit, remaining, when it resets) read from the provider's own budget endpoint, which is exempt from the budget it reports, plus whether a key is set and where to raise the limit. The window is ONE bucket per caller shared across every provider host, so the numbers apply to all of them.",
@@ -175,6 +239,7 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
   server.registerTool(
     "list_repositories",
     {
+      ...toolMeta,
       title: "List the org's repositories",
       description: "List repositories for the universe's org. Results are identical to the provider's REST API and carry provider-form ids (node_id / numeric id).",
       inputSchema: { provider: providerArg },
@@ -185,6 +250,7 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
   server.registerTool(
     "get_repository",
     {
+      ...toolMeta,
       title: "Get a repository",
       description: "Fetch one repository by name (default: the flagship repo). Provider-shaped, with provider-form ids.",
       inputSchema: { provider: providerArg, repo: z.string().optional().describe("Repo name, e.g. 'parthenon'. Defaults to the flagship repo.") },
@@ -196,6 +262,7 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
   server.registerTool(
     "list_pull_requests",
     {
+      ...toolMeta,
       title: "List pull requests / merge requests",
       description: "List a repo's pull requests (GitHub) or merge requests (GitLab). Optional state filter.",
       inputSchema: {
@@ -215,6 +282,7 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
   server.registerTool(
     "get_pull_request",
     {
+      ...toolMeta,
       title: "Get a pull/merge request with its reviews",
       description:
         "Fetch one PR (GitHub) / MR (GitLab) plus its reviews (GitHub) / approvals (GitLab). Returns both in one result; each carries provider-form ids for cross-referencing.",
@@ -233,6 +301,7 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
   server.registerTool(
     "list_issues",
     {
+      ...toolMeta,
       title: "List issues",
       description: "List a repo's issues. Optional state filter (open/closed/all).",
       inputSchema: { provider: providerArg, repo: z.string().optional(), state: z.enum(["open", "closed", "all"]).optional() },
@@ -242,7 +311,7 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
       // GraphQL-only trackers (Linear) answer with a query, not a path.
       if (def.issuesGraphql) {
         const r = await u.gqlPost(provider, def.issuesGraphql(state));
-        return json({ provider, transport: "graphql", status: r.status, body: r.body, ...hintsOf(r) }, !r.ok);
+        return refusable(u, { provider, transport: "graphql", status: r.status, body: r.body, ...hintsOf(r) }, !r.ok);
       }
       if (!def.issuesPath) {
         return json({ error: `${provider} has no issue surface here: ${def.noIssuesReason ?? "not served."}` }, true);
@@ -257,6 +326,7 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
   server.registerTool(
     "get_user",
     {
+      ...toolMeta,
       title: "Get a user",
       description: "Fetch a user by login/username. Provider-shaped, with provider-form ids.",
       inputSchema: { provider: providerArg, login: z.string().describe("The user's login (GitHub) / username (GitLab).") },
@@ -268,6 +338,7 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
   server.registerTool(
     "search_commits_by_author",
     {
+      ...toolMeta,
       title: "Search commits by author",
       description:
         "Find commits authored by a given login in a repo. Returns SHAs (identical across GitHub and GitLab, invariant #5) with a REST path to fetch each — so you can cross-reference against either provider.",
@@ -292,7 +363,7 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
       for (let page = 1; page <= maxPages; page++) {
         const res = await u.restGet("github", `/repos/${cfg.orgLogin}/${repoName}/commits?per_page=${perPage}&page=${page}`);
         if (!res.ok) {
-          return json({ error: `Could not read commits for "${repoName}".`, status: res.status, body: res.body, ...hintsOf(res) }, true);
+          return refusable(u, { error: `Could not read commits for "${repoName}".`, status: res.status, body: res.body, ...hintsOf(res) }, true);
         }
         const batch = Array.isArray(res.body) ? (res.body as Array<Record<string, unknown>>) : [];
         collected.push(...batch);
@@ -340,6 +411,7 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
   server.registerTool(
     "get_snapshot",
     {
+      ...toolMeta,
       title: "Get a pinned snapshot hostname",
       description:
         "Return the pinned, reproducible hostname for a provider — point your client's base URL at it for drift-free CI. A snapshot regenerates byte-identically on every request.",

@@ -101,6 +101,19 @@ export interface McpConfig {
   snapshotPins: SnapshotPin[];
   coverageUrl: string;
   docsUrl: string;
+  /**
+   * The OAuth protected-resource metadata (RFC 9728) of the endpoint this
+   * server is served from, when it is served from one that takes OAuth.
+   *
+   * PRESENT ONLY ON THE HOSTED ENDPOINT: packages/gateway/src/mcp-route.ts
+   * `hostedMcpConfig()` sets it, and the same object configures the hosted
+   * server and its transport. ABSENT in `DEFAULT_CONFIG`, so the stdio package
+   * — which has no hosted endpoint and takes its key from the environment —
+   * advertises no OAuth anywhere: its tool list carries no security schemes,
+   * and its refusals no linking challenge. Read by tools.ts alone.
+   * decisions/2026-10-15-0124-oauth-tokens-on-the-gateway.md.
+   */
+  oauthResourceMetadataUrl?: string;
 }
 
 export const DEFAULT_CONFIG: McpConfig = {
@@ -690,4 +703,22 @@ export const KEY_REMEDY_REMOTE = "send a free key as Authorization: Bearer sk_li
 /** What a free key buys, after the remedy: the hourly figure and the one
  *  capability an agent can use with no code change. Scratch writes are opt-in
  *  per key, from the dashboard, so the clause says "opt-in". */
+/** The one OAuth scope the hosted endpoint offers (the gateway's `MCP_SCOPE`,
+ *  control-plane's `OAUTH_SCOPE`; packages/gateway/src/oauth-resource.test.ts holds the copies
+ *  together). */
+export const OAUTH_SCOPE = "universe:read";
+
+/** The `error_description` an anonymous over-limit refusal carries in its
+ *  linking challenge on the hosted endpoint (tools.ts `authChallengeMeta`). */
+export const LINK_ACCOUNT_DESCRIPTION = "Anonymous budget spent; link an account to use a key's budget";
+
+/** The hosted endpoint's signed-in address (packages/gateway mcp-route.ts
+ *  `MCP_AUTH_PATH`): it answers an anonymous call 401, which is what makes
+ *  Claude's connector start its sign-in. Named in the anonymous hosted
+ *  refusal (budget.ts `hostedAnonymousRefusalMessage`). */
+export const MCP_SIGN_IN_URL = "https://api.sandboxapis.dev/mcp/auth";
+
+/** Where a free key is created. */
+export const LOGIN_URL = "https://sandboxapis.dev/login";
+
 export const KEY_BUYS = `for ${FREE_HOURLY_LIMIT.toLocaleString("en-US")}/hour and opt-in scratch writes`;
