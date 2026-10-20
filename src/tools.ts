@@ -3,7 +3,7 @@
 
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { CallToolResult, ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import { PROVIDER_IDS } from "./provider-ids.js";
 import { LINK_ACCOUNT_DESCRIPTION, OAUTH_SCOPE, snapshotBaseUrl, type McpConfig } from "./config.js";
 import { buildOrientation } from "./discovery.js";
@@ -12,6 +12,25 @@ import { BUDGET_PATH, BUDGET_PROVIDER, hostedAnonymousRefusalMessage, keyRemedy,
 import type { McpUniverse, Provider, RestResult } from "./universe.js";
 
 const providerArg = z.enum(PROVIDER_IDS as unknown as [Provider, ...Provider[]]);
+
+/** The git hosts, named in the `provider` descriptions of the git-shaped tools.
+ *  Every other id answers those tools with an explanation (`requireGit`). */
+const GIT_HOSTS = "'github', 'gitlab', 'bitbucket' or 'ado'";
+
+/**
+ * The MCP tool annotations every tool carries. Truthful for all ten: no tool
+ * writes (the server is read-only even for a scratch-enabled key, see
+ * `orient`'s description), nothing a tool reads can change under it (the data
+ * set is an immutable artifact, invariant #3), so a repeat call has no further
+ * effect. `openWorld` is true for the tools that call the hosted service over
+ * the network and false for `get_snapshot`, which answers from the pin list
+ * compiled into this package. `title` repeats the tool's top-level title for
+ * clients on the 2025-03-26 protocol, where the annotation was the only place
+ * a title could go. decisions/2026-10-17-1504-mcp-tool-annotations.md.
+ */
+export function readOnlyAnnotations(title: string, openWorld: boolean): ToolAnnotations {
+  return { title, readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: openWorld };
+}
 
 /** Wrap any JSON-able payload as a tool result. */
 function json(payload: unknown, isError = false): CallToolResult {
@@ -159,15 +178,16 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
     {
       ...toolMeta,
       title: "Orient in the SandboxAPIs universe",
+      annotations: readOnlyAnnotations("Orient in the SandboxAPIs universe", true),
       description:
-        "START HERE. Returns everything needed to use SandboxAPIs with no docs: the universe/theme, every API surface and its base URL (git hosts and issue trackers), live-vs-snapshot modes and how to pin, the org and its teams/repos, notable entry points (each with a ready-to-run REST path), where the coverage manifest lives, and this server's access block — whether a key is set and how many requests are left this hour. " +
+        "START HERE. Returns everything needed to use SandboxAPIs with no docs: the universe/theme, every API surface and its base URL (git hosts and issue trackers), live-vs-snapshot modes and how to pin, the org and its teams/repos, notable entry points (each with a ready-to-run REST path), where the coverage manifest lives, and this server's access block: whether a key is set and how many requests are left this hour. " +
         // SCRATCH WRITES, phase 1: the REST surface accepts them and THIS SERVER
         // DOES NOT. Said here, in the one description every agent reads first,
         // because an agent that discovers the capability from the docs and then
         // cannot find a tool for it will assume the tool list is stale. When
         // `list_issues` learns to merge and `create_issue` appears, this
         // sentence is what changes.
-        "Writes: this server is READ-ONLY, including for a scratch-enabled key — the scratch layer (a per-key, 24-hour overlay: GitHub issues and issue comments, Jira comments and transitions, and Slack messages into existing channels) is a REST feature, so use the GitHub, Jira or Slack base URL above with your key for it, and expect the tools here to answer from the shared data set alone.",
+        "Writes: this server is READ-ONLY, including for a scratch-enabled key. The scratch layer (a per-key, 24-hour overlay: GitHub issues and issue comments, Jira comments and transitions, and Slack messages into existing channels) is a REST feature, so use the GitHub, Jira or Slack base URL above with your key for it, and expect the tools here to answer from the shared data set alone.",
       inputSchema: {},
     },
     async () => json(await buildOrientation(u)),
@@ -185,12 +205,13 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
     {
       ...toolMeta,
       title: "Check the remaining request budget",
+      annotations: readOnlyAnnotations("Check the remaining request budget", true),
       description:
-        "Costs nothing — call it before any loop of more than a handful of requests. Returns this server's real hourly window (limit, remaining, when it resets) read from the provider's own budget endpoint, which is exempt from the budget it reports, plus whether a key is set and where to raise the limit. The window is ONE bucket per caller shared across every provider host, so the numbers apply to all of them.",
+        "Costs nothing. Call it before any loop of more than a handful of requests. Returns this server's real hourly window (limit, remaining, when it resets) read from the provider's own budget endpoint, which is exempt from the budget it reports, plus whether a key is set and where to raise the limit. The window is ONE bucket per caller shared across every provider host, so the numbers apply to all of them.",
       inputSchema: {
         provider: providerArg
           .optional()
-          .describe("The host you are about to call. Optional — the budget is one shared window, so the numbers are the same for every provider."),
+          .describe("The provider host you are about to call, one of the ids orient lists, e.g. 'github'. Optional: the budget is one shared window, so the numbers are the same for every provider."),
       },
     },
     async ({ provider }) => {
@@ -241,8 +262,11 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
     {
       ...toolMeta,
       title: "List the org's repositories",
+      annotations: readOnlyAnnotations("List the org's repositories", true),
       description: "List repositories for the universe's org. Results are identical to the provider's REST API and carry provider-form ids (node_id / numeric id).",
-      inputSchema: { provider: providerArg },
+      inputSchema: {
+        provider: providerArg.describe(`The git host to list repositories from, one of the ids orient lists: ${GIT_HOSTS}, e.g. 'github'.`),
+      },
     },
     async ({ provider }) => requireGit(provider) ?? passthrough(u, provider, mcpProviderById[provider].orgReposPath!(cfg.orgLogin)),
   );
@@ -252,8 +276,12 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
     {
       ...toolMeta,
       title: "Get a repository",
+      annotations: readOnlyAnnotations("Get a repository", true),
       description: "Fetch one repository by name (default: the flagship repo). Provider-shaped, with provider-form ids.",
-      inputSchema: { provider: providerArg, repo: z.string().optional().describe("Repo name, e.g. 'parthenon'. Defaults to the flagship repo.") },
+      inputSchema: {
+        provider: providerArg.describe(`The git host to read the repository from, one of the ids orient lists: ${GIT_HOSTS}, e.g. 'github'.`),
+        repo: z.string().optional().describe("The repository name without the organisation, e.g. 'parthenon', the flagship repo, which is used when omitted."),
+      },
     },
     async ({ provider, repo }) => requireGit(provider) ?? passthrough(u, provider, projectPath(u, provider, repo ?? cfg.flagshipRepo)),
   );
@@ -264,11 +292,15 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
     {
       ...toolMeta,
       title: "List pull requests / merge requests",
+      annotations: readOnlyAnnotations("List pull requests / merge requests", true),
       description: "List a repo's pull requests (GitHub) or merge requests (GitLab). Optional state filter.",
       inputSchema: {
-        provider: providerArg,
-        repo: z.string().optional(),
-        state: z.enum(["open", "closed", "merged", "all"]).optional().describe("Provider state filter."),
+        provider: providerArg.describe(`The git host to read from, one of the ids orient lists: ${GIT_HOSTS}, e.g. 'gitlab' for merge requests.`),
+        repo: z.string().optional().describe("The repository name without the organisation, e.g. 'parthenon', the flagship repo, which is used when omitted."),
+        state: z
+          .enum(["open", "closed", "merged", "all"])
+          .optional()
+          .describe("Filter by state, one of 'open', 'closed', 'merged' or 'all', e.g. 'merged'; when omitted the provider's own default applies."),
       },
     },
     async ({ provider, repo, state }) => {
@@ -284,9 +316,18 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
     {
       ...toolMeta,
       title: "Get a pull/merge request with its reviews",
+      annotations: readOnlyAnnotations("Get a pull/merge request with its reviews", true),
       description:
         "Fetch one PR (GitHub) / MR (GitLab) plus its reviews (GitHub) / approvals (GitLab). Returns both in one result; each carries provider-form ids for cross-referencing.",
-      inputSchema: { provider: providerArg, number: z.number().int().positive(), repo: z.string().optional() },
+      inputSchema: {
+        provider: providerArg.describe(`The git host to read from, one of the ids orient lists: ${GIT_HOSTS}, e.g. 'github'.`),
+        number: z
+          .number()
+          .int()
+          .positive()
+          .describe("The pull request number as the provider shows it (the merge request iid on GitLab), a positive integer, e.g. 47."),
+        repo: z.string().optional().describe("The repository name without the organisation, e.g. 'parthenon', the flagship repo, which is used when omitted."),
+      },
     },
     async ({ provider, number, repo }) => {
       const guard = requireGit(provider);
@@ -303,8 +344,18 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
     {
       ...toolMeta,
       title: "List issues",
+      annotations: readOnlyAnnotations("List issues", true),
       description: "List a repo's issues. Optional state filter (open/closed/all).",
-      inputSchema: { provider: providerArg, repo: z.string().optional(), state: z.enum(["open", "closed", "all"]).optional() },
+      inputSchema: {
+        provider: providerArg.describe(
+          "The provider to read issues from, one of the ids orient lists: 'github' or 'gitlab' (per repository), or 'jira' or 'linear' (across the whole tracker), e.g. 'jira'.",
+        ),
+        repo: z
+          .string()
+          .optional()
+          .describe("The repository name without the organisation, e.g. 'parthenon', the flagship repo, which is used when omitted; ignored by 'jira' and 'linear'."),
+        state: z.enum(["open", "closed", "all"]).optional().describe("Filter by state, one of 'open', 'closed' or 'all', e.g. 'closed'; when omitted the provider's own default applies."),
+      },
     },
     async ({ provider, repo, state }) => {
       const def = mcpProviderById[provider];
@@ -328,8 +379,12 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
     {
       ...toolMeta,
       title: "Get a user",
+      annotations: readOnlyAnnotations("Get a user", true),
       description: "Fetch a user by login/username. Provider-shaped, with provider-form ids.",
-      inputSchema: { provider: providerArg, login: z.string().describe("The user's login (GitHub) / username (GitLab).") },
+      inputSchema: {
+        provider: providerArg.describe(`The git host to read the user from, one of the ids orient lists: ${GIT_HOSTS}, e.g. 'github'.`),
+        login: z.string().describe("The user's login (GitHub) or username (GitLab), e.g. 'athena'."),
+      },
     },
     async ({ provider, login }) => requireGit(provider) ?? passthrough(u, provider, mcpProviderById[provider].userPath!(login)),
   );
@@ -340,9 +395,18 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
     {
       ...toolMeta,
       title: "Search commits by author",
+      annotations: readOnlyAnnotations("Search commits by author", true),
       description:
-        "Find commits authored by a given login in a repo. Returns SHAs (identical across GitHub and GitLab, invariant #5) with a REST path to fetch each — so you can cross-reference against either provider.",
-      inputSchema: { author: z.string().describe("Author login, e.g. 'athena'."), repo: z.string().optional(), provider: providerArg.optional() },
+        "Find commits authored by a given login in a repo. Returns SHAs (identical across GitHub and GitLab, invariant #5) with a REST path to fetch each, so you can cross-reference against either provider.",
+      inputSchema: {
+        author: z.string().describe("The author's login, matched without regard to case, e.g. 'athena'."),
+        repo: z.string().optional().describe("The repository name without the organisation, e.g. 'parthenon', the flagship repo, which is used when omitted."),
+        provider: providerArg
+          .optional()
+          .describe(
+            `The git host whose REST path each returned commit carries, ${GIT_HOSTS}, defaulting to 'github'; commits are read from GitHub either way, because the SHAs are identical on every host.`,
+          ),
+      },
     },
     async ({ author, repo, provider }) => {
       const prov: Provider = provider ?? "github";
@@ -413,9 +477,12 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
     {
       ...toolMeta,
       title: "Get a pinned snapshot hostname",
+      annotations: readOnlyAnnotations("Get a pinned snapshot hostname", false),
       description:
-        "Return the pinned, reproducible hostname for a provider — point your client's base URL at it for drift-free CI. A snapshot regenerates byte-identically on every request.",
-      inputSchema: { provider: providerArg },
+        "Return the pinned, reproducible hostname for a provider. Point your client's base URL at it for drift-free CI. A snapshot regenerates byte-identically on every request.",
+      inputSchema: {
+        provider: providerArg.describe("The provider to pin, one of the ids orient lists, e.g. 'github'; the newest frozen generation for it is returned, with any older ones listed beside it."),
+      },
     },
     async ({ provider }) => {
       // Prefer the NEWEST generation for the provider — it is the complete
