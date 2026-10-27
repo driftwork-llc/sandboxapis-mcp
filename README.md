@@ -1,6 +1,6 @@
 # @sandboxapis/mcp
 
-An MCP server that gives an AI agent a **realistic, read-only data set** to work against — repos, pull requests, reviews, issues, sprints, commits — served through API-compatible replicas of GitHub, GitLab, Bitbucket, Azure DevOps, Jira, Linear, Slack, Microsoft Teams, Sentry, PagerDuty, Statuspage, CircleCI, Buildkite, Zendesk, Salesforce, HubSpot, Anthropic, OpenAI, ChatGPT, Cursor and Devin.
+An MCP server that gives an AI agent a **realistic, read-only data set** to work against (repos, pull requests, reviews, issues, sprints, commits), served through API-compatible replicas of GitHub, GitLab, Bitbucket, Azure DevOps, Jira, Linear, Slack, Microsoft Teams, Sentry, PagerDuty, Statuspage, CircleCI, Buildkite, Zendesk, Salesforce, HubSpot, Anthropic, OpenAI, ChatGPT, Cursor, Devin, Google Antigravity, Prometheus, Grafana and Datadog.
 
 No test accounts. No credentials. No rate-limit anxiety. Nothing to clean up afterwards.
 
@@ -12,7 +12,7 @@ Then have the agent call **`orient`** first. It comes back with the API surfaces
 
 ## Why this exists
 
-Agents that build or test integrations need something real to point at. The options are usually a hand-maintained fake org that's thin and stale, or a real account with credentials, rate limits, and consequences. This is the third option: one simulated company — `olympus-labs` — with months of coherent history, rendered into 21 different API dialects, where every reference resolves. A pull request's author is a fetchable user, its commits exist with matching SHAs, its reviewers belong to real teams, and the same story is queryable through every host.
+Agents that build or test integrations need something real to point at. The options are usually a hand-maintained fake org that's thin and stale, or a real account with credentials, rate limits, and consequences. This is the third option: one simulated company, `olympus-labs`, with months of coherent history, rendered into 25 different API dialects, where every reference resolves. A pull request's author is a fetchable user, its commits exist with matching SHAs, its reviewers belong to real teams, and the same story is queryable through every host.
 
 Everything is **read-only**. Writes return the provider's own error shape with a plain explanation, so an agent that tries one learns something instead of breaking something.
 
@@ -38,7 +38,7 @@ Everything is optional — the server works with no configuration at all.
 | Variable | Effect |
 |---|---|
 | `SANDBOXAPIS_API_KEY` | Lifts the anonymous limit (60 req/hr) to 600. Free key at [sandboxapis.dev](https://sandboxapis.dev/login) — agents exhaust 60/hr quickly. Without it, a refusal names this variable rather than a signup page; with it, a refusal names the rung the key is on. Either way the tool result carries `upgrade` (see below). |
-| `SANDBOXAPIS_BASE_URL_GITHUB` (and `_GITLAB`, `_BITBUCKET`, `_ADO`, `_JIRA`, `_LINEAR`, `_SLACK`, `_TEAMS`, `_SENTRY`, `_PAGERDUTY`, `_STATUSPAGE`, `_SALESFORCE`, `_HUBSPOT`, `_ZENDESK`, `_CIRCLECI`, `_BUILDKITE`, `_ANTHROPIC`, `_OPENAI`, `_CHATGPT`, `_CURSOR`, `_DEVIN`) | Point a surface elsewhere — a pinned snapshot host, or a self-hosted instance. |
+| `SANDBOXAPIS_BASE_URL_GITHUB` (and `_GITLAB`, `_BITBUCKET`, `_ADO`, `_JIRA`, `_LINEAR`, `_SLACK`, `_TEAMS`, `_SENTRY`, `_PAGERDUTY`, `_STATUSPAGE`, `_SALESFORCE`, `_HUBSPOT`, `_ZENDESK`, `_CIRCLECI`, `_BUILDKITE`, `_ANTHROPIC`, `_OPENAI`, `_CHATGPT`, `_CURSOR`, `_DEVIN`, `_ANTIGRAVITY`, `_PROMETHEUS`, `_GRAFANA, _DATADOG`) | Point a surface elsewhere: a pinned snapshot host, or a self-hosted instance. |
 
 ## When the budget runs out
 

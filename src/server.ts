@@ -31,7 +31,7 @@ export function createSandboxMcpServer(deps: McpUniverseDeps): { server: McpServ
     { name: "sandboxapis", version: SERVER_VERSION },
     {
       instructions:
-        "SandboxAPIs serves read-only, API-compatible replicas of the developer tools you already use, all pre-loaded with the same simulated data set. Call `orient` first to learn the providers, base URLs, org map, notable entry points, and how to pin a reproducible snapshot — then query, or point your provider client at the base URLs directly.",
+        "SandboxAPIs serves read-only, API-compatible replicas of the developer tools you already use, all pre-loaded with the same simulated data set. Call `orient` first to learn the providers, base URLs, org map, notable entry points, and how to pin a reproducible snapshot. Then query, or point your provider client at the base URLs directly.",
     },
   );
   registerTools(server, universe);

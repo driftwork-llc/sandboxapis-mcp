@@ -127,7 +127,7 @@ export function budgetNote(budget: Budget): string {
     // the difference between "no live count" and a fabricated one.
     return budget.numbers
       ? anonymous
-      : `${anonymous} (The live window could not be read — ${budget.unavailable} — so no remaining count is reported.)`;
+      : `${anonymous} (The live window could not be read (${budget.unavailable}), so no remaining count is reported.)`;
   }
   const refusalClause = "when a refusal arrives, tool results carry `upgrade` with the next rung.";
   return budget.numbers

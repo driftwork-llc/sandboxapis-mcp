@@ -1,9 +1,9 @@
 {
   "name": "@sandboxapis/mcp",
-  "version": "0.3.17",
+  "version": "0.3.19",
   "mcpName": "dev.sandboxapis/mcp",
   "type": "module",
-  "description": "MCP server for SandboxAPIs — read-only, API-compatible replicas of 21 developer and SaaS APIs (GitHub, GitLab, Jira, Linear, Slack, Sentry, PagerDuty, Salesforce, CircleCI, OpenAI, Anthropic and more), preloaded with one realistic simulated data set.",
+  "description": "MCP server for SandboxAPIs: read-only, API-compatible replicas of 25 developer and SaaS APIs (GitHub, GitLab, Jira, Linear, Slack, Sentry, PagerDuty, Salesforce, CircleCI, OpenAI, Anthropic and more), preloaded with one realistic simulated data set.",
   "license": "MIT",
   "keywords": [
     "mcp",
@@ -36,7 +36,11 @@
     "openai",
     "cursor",
     "devin",
-    "chatgpt"
+    "chatgpt",
+    "antigravity",
+    "prometheus",
+    "grafana",
+    "datadog"
   ],
   "homepage": "https://sandboxapis.dev/docs/mcp",
   "repository": {

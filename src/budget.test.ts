@@ -69,7 +69,7 @@ const REFUSED = {
   body: {
     message:
       "API rate limit exceeded. This MCP server is running without a key (60 requests/hour). " +
-      "Set SANDBOXAPIS_API_KEY to a free key for 600/hour and opt-in scratch writes — https://sandboxapis.dev/upgrade?from=anonymous",
+      "Set SANDBOXAPIS_API_KEY to a free key for 600/hour and opt-in scratch writes: https://sandboxapis.dev/upgrade?from=anonymous",
     documentation_url: "https://sandboxapis.dev/upgrade?from=anonymous",
     status: "403",
   },

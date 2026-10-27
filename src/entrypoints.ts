@@ -108,7 +108,7 @@ export async function computeEntryPoints(u: McpUniverse, ctx: EntryPointContext)
     eps.push(
       ep(
         "A merged pull request",
-        `PR #${merged.number} "${merged.title}" — a completed review→merge arc; its merge commit exists in history.`,
+        `PR #${merged.number} "${merged.title}": a completed arc from review to merge; its merge commit exists in history.`,
         repoPath(`/${rname}/pulls/${merged.number}`),
         [repoPath(`/${rname}/pulls/${merged.number}/commits`)],
       ),
@@ -121,7 +121,7 @@ export async function computeEntryPoints(u: McpUniverse, ctx: EntryPointContext)
     eps.push(
       ep(
         "A draft pull request (edge case)",
-        `PR #${draft.number} "${draft.title}" — draft state, useful for testing draft/ready handling.`,
+        `PR #${draft.number} "${draft.title}": draft state, useful for testing draft/ready handling.`,
         repoPath(`/${rname}/pulls/${draft.number}`),
         [repoPath(`/${rname}/pulls/${draft.number}/requested_reviewers`)],
       ),
@@ -149,7 +149,7 @@ export async function computeEntryPoints(u: McpUniverse, ctx: EntryPointContext)
     eps.push(
       ep(
         "Richest pull request",
-        `PR #${richest.p.number} "${richest.p.title}" — ${richest.reviewComments} inline review comments across its discussion.`,
+        `PR #${richest.p.number} "${richest.p.title}": ${richest.reviewComments} inline review comments across its discussion.`,
         repoPath(`/${rname}/pulls/${richest.p.number}`),
         [repoPath(`/${rname}/pulls/${richest.p.number}/reviews`), repoPath(`/${rname}/pulls/${richest.p.number}/comments`)],
       ),
@@ -162,7 +162,7 @@ export async function computeEntryPoints(u: McpUniverse, ctx: EntryPointContext)
     eps.push(
       ep(
         "An open issue",
-        `Issue #${issue.number} "${issue.title}" — cross-references authors, labels, and (often) a milestone.`,
+        `Issue #${issue.number} "${issue.title}": cross-references authors, labels, and (often) a milestone.`,
         repoPath(`/${rname}/issues/${issue.number}`),
       ),
     );
@@ -176,7 +176,7 @@ export async function computeEntryPoints(u: McpUniverse, ctx: EntryPointContext)
     eps.push(
       ep(
         "An incident (revert) arc",
-        `Commit ${revert.sha.slice(0, 12)} reverts earlier work — a "ship → break → roll back" storyline spanning commits and review.`,
+        `Commit ${revert.sha.slice(0, 12)} reverts earlier work: a storyline that ships a change, breaks, and rolls it back, spanning commits and review.`,
         repoPath(`/${rname}/commits/${revert.sha}`),
       ),
     );
@@ -187,7 +187,7 @@ export async function computeEntryPoints(u: McpUniverse, ctx: EntryPointContext)
     eps.push(
       ep(
         "A recent commit",
-        `${recent.sha.slice(0, 12)} — the latest commit; the SHA is identical on every provider rendering.`,
+        `${recent.sha.slice(0, 12)}: the latest commit; the SHA is identical on every provider rendering.`,
         repoPath(`/${rname}/commits/${recent.sha}`),
       ),
     );
@@ -199,7 +199,7 @@ export async function computeEntryPoints(u: McpUniverse, ctx: EntryPointContext)
     eps.push(
       ep(
         "Largest team",
-        `${bigTeam.team.name} (@${org}/${bigTeam.team.slug}) — ${bigTeam.members} members.`,
+        `${bigTeam.team.name} (@${org}/${bigTeam.team.slug}): ${bigTeam.members} members.`,
         `/orgs/${org}/teams/${bigTeam.team.slug}`,
         [`/orgs/${org}/teams/${bigTeam.team.slug}/members`],
       ),

@@ -45,7 +45,7 @@ export interface McpProviderDef {
 const github: McpProviderDef = {
   id: "github",
   howTo: (baseUrl) =>
-    `Point your GitHub client (e.g. Octokit) baseUrl/baseUrl at ${baseUrl} — a bare env-var swap. Paths, JSON, and headers mirror api.github.com.`,
+    `Point your GitHub client (e.g. Octokit) baseUrl option at ${baseUrl}, a bare env-var swap. Paths, JSON, and headers mirror api.github.com.`,
   nextSteps: (baseUrl, org, flagship) => [
     `GitHub: curl ${baseUrl}/repos/${org}/${flagship}`,
     `GitHub: curl ${baseUrl}/repos/${org}/${flagship}/pulls?state=all`,
@@ -135,7 +135,7 @@ const ado: McpProviderDef = {
   // POST (`/_apis/wit/wiql`), which no GET path can express, so this tool hands
   // over the exact call instead of pretending the surface is missing.
   noIssuesReason:
-    "Azure DevOps serves work items — the same canonical issues Jira and Linear render — but listing them is a WIQL POST, not a GET, so it's outside this tool. Run: curl -X POST \"$BASE/olympus-labs/olympus-labs/_apis/wit/wiql?api-version=7.1\" -H 'content-type: application/json' -d '{\"query\":\"SELECT [System.Id] FROM WorkItems ORDER BY [System.ChangedDate] DESC\"}', then fetch ids via /_apis/wit/workitems?ids=…",
+    "Azure DevOps serves work items (the same canonical issues Jira and Linear render), but listing them is a WIQL POST, not a GET, so it's outside this tool. Run: curl -X POST \"$BASE/olympus-labs/olympus-labs/_apis/wit/wiql?api-version=7.1\" -H 'content-type: application/json' -d '{\"query\":\"SELECT [System.Id] FROM WorkItems ORDER BY [System.ChangedDate] DESC\"}', then fetch ids via /_apis/wit/workitems?ids=…",
   userPath: (login) => `/_apis/identities?searchFilter=General&filterValue=${encodeURIComponent(login)}`,
   commitPath: (base, sha) => `${base}/commits/${sha}`,
   exampleCurl: (baseUrl, org, repo) => `curl "${baseUrl}/${org}/${org}/_apis/git/repositories/${repo}?api-version=7.1"`,
@@ -149,9 +149,9 @@ const ado: McpProviderDef = {
 const jira: McpProviderDef = {
   id: "jira",
   howTo: (baseUrl) =>
-    `Point your Jira client (e.g. jira.js Version3Client, python jira) at ${baseUrl} as the host. Paths mirror {site}.atlassian.net — rest/api/3 + rest/agile/1.0; the removed old /search family serves 410 like live Jira, use /rest/api/3/search/jql.`,
+    `Point your Jira client (e.g. jira.js Version3Client, python jira) at ${baseUrl} as the host. Paths mirror {site}.atlassian.net: rest/api/3 + rest/agile/1.0; the removed old /search family serves 410 like live Jira, use /rest/api/3/search/jql.`,
   nextSteps: (baseUrl) => [`Jira: curl "${baseUrl}/rest/api/3/search/jql?jql=${encodeURIComponent("project = ARGO ORDER BY updated DESC")}&fields=summary,status"`],
-  notGitReason: "Jira is an issue tracker — the same canonical story's git surfaces live on the gh./gl./bb./ado. hosts.",
+  notGitReason: "Jira is an issue tracker; the same canonical story's git surfaces live on the gh./gl./bb./ado. hosts.",
   // Tracker issue reads go through JQL search (projectBase is unused).
   issuesPath: (_base, state) =>
     `/rest/api/3/search/jql?jql=${encodeURIComponent(state === "closed" ? "statusCategory = Done ORDER BY updated DESC" : state === "all" ? "created >= '2000-01-01' ORDER BY updated DESC" : "statusCategory != Done ORDER BY updated DESC")}&fields=summary,status,assignee,issuetype`,
@@ -161,11 +161,11 @@ const jira: McpProviderDef = {
 const linear: McpProviderDef = {
   id: "linear",
   howTo: (baseUrl) =>
-    `Point @linear/sdk at ${baseUrl}/graphql via the client's apiUrl option (Linear is GraphQL-only — one endpoint). Both auth forms pass: a bare API key in Authorization, or an OAuth Bearer token.`,
+    `Point @linear/sdk at ${baseUrl}/graphql via the client's apiUrl option (Linear is GraphQL-only: one endpoint). Both auth forms pass: a bare API key in Authorization, or an OAuth Bearer token.`,
   nextSteps: (baseUrl) => [
     `Linear: curl -X POST "${baseUrl}/graphql" -H 'content-type: application/json' -d '{"query":"{ rateLimitStatus { kind limits { type remainingAmount } } }"}'`,
   ],
-  notGitReason: "Linear is an issue tracker — the same canonical story's git surfaces live on the gh./gl./bb./ado. hosts.",
+  notGitReason: "Linear is an issue tracker; the same canonical story's git surfaces live on the gh./gl./bb./ado. hosts.",
   // Linear is GraphQL-only: issues come from a query, not a REST path. Linear's
   // state *types* are the filterable axis (backlog/unstarted/started/completed/
   // canceled), so open == "not completed" rather than an `open` literal.
@@ -184,75 +184,75 @@ const linear: McpProviderDef = {
 const anthropic: McpProviderDef = {
   id: "anthropic",
   howTo: (baseUrl) =>
-    `Point the official anthropic SDK's Admin-API calls at ${baseUrl} via the client's baseURL option (or curl directly). Send x-api-key (any value is accepted — the sandbox has no credential ceremony) and the REQUIRED anthropic-version: 2023-06-01 header. This is the org's AI-telemetry surface: members, workspaces, API keys, usage & cost reports, and the Claude Code Analytics report — all reconciling with the git activity on the gh./gl./bb./ado. hosts.`,
+    `Point the official anthropic SDK's Admin-API calls at ${baseUrl} via the client's baseURL option (or curl directly). Send x-api-key (any value is accepted; the sandbox has no credential ceremony) and the REQUIRED anthropic-version: 2023-06-01 header. This is the org's AI-telemetry surface: members, workspaces, API keys, usage & cost reports, and the Claude Code Analytics report, all reconciling with the git activity on the gh./gl./bb./ado. hosts.`,
   nextSteps: (baseUrl) => [
     `Anthropic: curl "${baseUrl}/v1/organizations/usage_report/claude_code?starting_at=2026-06-01" -H 'x-api-key: any' -H 'anthropic-version: 2023-06-01'`,
     `Anthropic: curl "${baseUrl}/v1/organizations/users" -H 'x-api-key: any' -H 'anthropic-version: 2023-06-01'`,
   ],
   notGitReason:
-    "Anthropic is an AI-platform telemetry provider — no repositories or issues; the commits and PRs its Claude Code analytics count live on the git hosts, with matching identities.",
+    "Anthropic is an AI-platform telemetry provider with no repositories or issues; the commits and PRs its Claude Code analytics count live on the git hosts, with matching identities.",
   noIssuesReason:
-    "Anthropic serves org telemetry (usage, cost, Claude Code analytics), not an issue tracker — tracker surfaces live on jira./linear.",
+    "Anthropic serves org telemetry (usage, cost, Claude Code analytics), not an issue tracker. Tracker surfaces live on jira./linear.",
   exampleCurl: (baseUrl) => `curl "${baseUrl}/v1/organizations/me" -H 'x-api-key: any' -H 'anthropic-version: 2023-06-01'`,
 };
 
 const cursor: McpProviderDef = {
   id: "cursor",
   howTo: (baseUrl) =>
-    `Point your Cursor team-API calls at ${baseUrl} (curl or any HTTP client — Cursor publishes no official SDK). Auth is HTTP Basic with the key as the USERNAME and an empty password (curl -u any-key:) or a Bearer token; any value is accepted. Admin usage endpoints are POST-as-read (JSON date-range body, epoch ms); analytics + AI code tracking are GETs with startDate/endDate. The AI code tracking commits carry REAL SHAs — every commitHash resolves on the gh./gl./bb./ado. hosts.`,
+    `Point your Cursor team-API calls at ${baseUrl} (curl or any HTTP client; Cursor publishes no official SDK). Auth is HTTP Basic with the key as the USERNAME and an empty password (curl -u any-key:) or a Bearer token; any value is accepted. Admin usage endpoints are POST-as-read (JSON date-range body, epoch ms); analytics + AI code tracking are GETs with startDate/endDate. The AI code tracking commits carry REAL SHAs: every commitHash resolves on the gh./gl./bb./ado. hosts.`,
   nextSteps: (baseUrl) => [
     `Cursor: curl -u any-key: "${baseUrl}/teams/members"`,
     `Cursor: curl -u any-key: "${baseUrl}/analytics/team/dau?startDate=7d&endDate=0d"`,
   ],
   notGitReason:
-    "Cursor is an AI-editor telemetry provider — no repositories or issues; the commits its AI code tracking attributes live on the git hosts, with matching SHAs and identities.",
+    "Cursor is an AI-editor telemetry provider with no repositories or issues; the commits its AI code tracking attributes live on the git hosts, with matching SHAs and identities.",
   noIssuesReason:
-    "Cursor serves team telemetry (usage, spend, analytics, AI code tracking), not an issue tracker — tracker surfaces live on jira./linear.",
+    "Cursor serves team telemetry (usage, spend, analytics, AI code tracking), not an issue tracker. Tracker surfaces live on jira./linear.",
   exampleCurl: (baseUrl) => `curl -u any-key: "${baseUrl}/teams/members"`,
 };
 
 const devin: McpProviderDef = {
   id: "devin",
   howTo: (baseUrl) =>
-    `Point your Devin v3 API calls at ${baseUrl} (curl or a client generated from the official v3-openapi.yaml). Auth is a Bearer token (Devin's cog_ service-user keys — any value is accepted here). The enterprise scope serves the sandbox's tier-1 slice: sessions, members/users, ACU consumption (PST day buckets, as documented), and usage metrics. Session PRs link to real pulls on the git hosts, with matching identities.`,
+    `Point your Devin v3 API calls at ${baseUrl} (curl or a client generated from the official v3-openapi.yaml). Auth is a Bearer token (Devin's cog_ service-user keys; any value is accepted here). The enterprise scope serves the sandbox's tier-1 slice: sessions, members/users, ACU consumption (PST day buckets, as documented), and usage metrics. Session PRs link to real pulls on the git hosts, with matching identities.`,
   nextSteps: (baseUrl) => [
     `Devin: curl -H 'Authorization: Bearer any-key' "${baseUrl}/v3/enterprise/sessions?first=5"`,
     `Devin: curl -H 'Authorization: Bearer any-key' "${baseUrl}/v3/enterprise/consumption/daily"`,
   ],
   notGitReason:
-    "Devin is an AI-agent telemetry provider — no repositories or issues; the PRs its sessions ship live on the git hosts, with matching identities.",
+    "Devin is an AI-agent telemetry provider with no repositories or issues; the PRs its sessions ship live on the git hosts, with matching identities.",
   noIssuesReason:
-    "Devin serves enterprise telemetry (sessions, ACU consumption, usage metrics), not an issue tracker — tracker surfaces live on jira./linear.",
+    "Devin serves enterprise telemetry (sessions, ACU consumption, usage metrics), not an issue tracker. Tracker surfaces live on jira./linear.",
   exampleCurl: (baseUrl) => `curl -H 'Authorization: Bearer any-key' "${baseUrl}/v3/enterprise/sessions?first=5"`,
 };
 
 const slack: McpProviderDef = {
   id: "slack",
   howTo: (baseUrl) =>
-    `Point @slack/web-api (or curl) at ${baseUrl} via the client's slackApiUrl option (paths are /api/<method>, exactly like slack.com/api). Auth is a Bearer bot/user token (xoxb-…/xoxp-… — any value is accepted here). This is the org's team-messaging surface: channels, history, threads, reactions, and the workspace roster — the SAME story the git hosts and trackers tell, discussed. The #incident-bridge channel's burst brackets the real incident issue; #releases announcements cite real tags. Success and failure are BOTH HTTP 200 with an ok boolean — Slack's real error model.`,
+    `Point @slack/web-api (or curl) at ${baseUrl} via the client's slackApiUrl option (paths are /api/<method>, exactly like slack.com/api). Auth is a Bearer bot/user token (xoxb-…/xoxp-…; any value is accepted here). This is the org's team-messaging surface: channels, history, threads, reactions, and the workspace roster: the SAME story the git hosts and trackers tell, discussed. The #incident-bridge channel's burst brackets the real incident issue; #releases announcements cite real tags. Success and failure are BOTH HTTP 200 with an ok boolean, which is Slack's real error model.`,
   nextSteps: (baseUrl) => [
     `Slack: curl -H 'Authorization: Bearer xoxb-anything' "${baseUrl}/api/conversations.list"`,
     `Slack: curl -H 'Authorization: Bearer xoxb-anything' "${baseUrl}/api/auth.test"`,
   ],
   notGitReason:
-    "Slack is a team-messaging provider — no repositories or issues; the PRs and incidents its channels discuss live on the git hosts and trackers, with matching identities.",
+    "Slack is a team-messaging provider with no repositories or issues; the PRs and incidents its channels discuss live on the git hosts and trackers, with matching identities.",
   noIssuesReason:
-    "Slack serves channels, threads, and messages, not an issue tracker — tracker surfaces live on jira./linear.; the #incident-bridge chatter references the tracker's real incident issues.",
+    "Slack serves channels, threads, and messages, not an issue tracker. Tracker surfaces live on jira./linear.; the #incident-bridge chatter references the tracker's real incident issues.",
   exampleCurl: (baseUrl) => `curl -H 'Authorization: Bearer xoxb-anything' "${baseUrl}/api/conversations.list"`,
 };
 
 const openai: McpProviderDef = {
   id: "openai",
   howTo: (baseUrl) =>
-    `Point the official openai SDK (or curl) at ${baseUrl} via the client's baseURL option. Auth is a Bearer admin key (sk-admin-… — any value is accepted here). This is the org's OpenAI platform telemetry: users, projects, admin-key metadata, completions usage, and costs — the codex cohort's usage, reconciling with the git activity on the git hosts.`,
+    `Point the official openai SDK (or curl) at ${baseUrl} via the client's baseURL option. Auth is a Bearer admin key (sk-admin-…; any value is accepted here). This is the org's OpenAI platform telemetry: users, projects, admin-key metadata, completions usage, and costs: the codex cohort's usage, reconciling with the git activity on the git hosts.`,
   nextSteps: (baseUrl) => [
     `OpenAI: curl -H 'Authorization: Bearer any-key' "${baseUrl}/v1/organization/usage/completions?start_time=1777000000&group_by=model"`,
     `OpenAI: curl -H 'Authorization: Bearer any-key' "${baseUrl}/v1/organization/users"`,
   ],
   notGitReason:
-    "OpenAI is an AI-platform telemetry provider — no repositories or issues; the commits its codex cohort produces live on the git hosts, with matching identities.",
+    "OpenAI is an AI-platform telemetry provider with no repositories or issues; the commits its codex cohort produces live on the git hosts, with matching identities.",
   noIssuesReason:
-    "OpenAI serves org telemetry (usage, costs, members), not an issue tracker — tracker surfaces live on jira./linear.",
+    "OpenAI serves org telemetry (usage, costs, members), not an issue tracker. Tracker surfaces live on jira./linear.",
   exampleCurl: (baseUrl) => `curl -H 'Authorization: Bearer any-key' "${baseUrl}/v1/organization/users"`,
 };
 
@@ -273,15 +273,15 @@ export const CODEX_WORKSPACE = "2c9bcd8f-c169-4ce5-a266-c8cba93fbad5";
 const chatgpt: McpProviderDef = {
   id: "chatgpt",
   howTo: (baseUrl) =>
-    `Point your Codex Enterprise Analytics calls at ${baseUrl} (curl or any HTTP client — the API is documented by an official OpenAPI, not an SDK). Auth is a Bearer workspace Admin key (any value is accepted here). This universe has ONE workspace, ${CODEX_WORKSPACE}; every path is /v1/analytics/codex/workspaces/{workspace_id}/{usage|code_reviews|code_review_responses}, windowed by start_time/end_time in Unix seconds (end_time exclusive). Usage rows are per user by default and workspace-wide with group=workspace. This is the SAME codex cohort the openai host bills: estimated_cost_usd over a window sums to exactly the openai /v1/organization/costs total for it, and code_attribution counts real commits that resolve on the git hosts.`,
+    `Point your Codex Enterprise Analytics calls at ${baseUrl} (curl or any HTTP client; the API is documented by an official OpenAPI, not an SDK). Auth is a Bearer workspace Admin key (any value is accepted here). This universe has ONE workspace, ${CODEX_WORKSPACE}; every path is /v1/analytics/codex/workspaces/{workspace_id}/{usage|code_reviews|code_review_responses}, windowed by start_time/end_time in Unix seconds (end_time exclusive). Usage rows are per user by default and workspace-wide with group=workspace. This is the SAME codex cohort the openai host bills: estimated_cost_usd over a window sums to exactly the openai /v1/organization/costs total for it, and code_attribution counts real commits that resolve on the git hosts.`,
   nextSteps: (baseUrl) => [
     `ChatGPT: curl -H 'Authorization: Bearer any-key' "${baseUrl}/v1/analytics/codex/workspaces/${CODEX_WORKSPACE}/usage?group=workspace&limit=5"`,
     `ChatGPT: curl -H 'Authorization: Bearer any-key' "${baseUrl}/v1/analytics/codex/workspaces/${CODEX_WORKSPACE}/usage?limit=5"`,
   ],
   notGitReason:
-    "ChatGPT's Codex Analytics is an AI-agent telemetry provider — no repositories or issues; the commits its code attribution counts live on the git hosts, with matching SHAs and identities.",
+    "ChatGPT's Codex Analytics is an AI-agent telemetry provider with no repositories or issues; the commits its code attribution counts live on the git hosts, with matching SHAs and identities.",
   noIssuesReason:
-    "The Codex Analytics API serves workspace telemetry (usage, code reviews), not an issue tracker — tracker surfaces live on jira./linear.",
+    "The Codex Analytics API serves workspace telemetry (usage, code reviews), not an issue tracker. Tracker surfaces live on jira./linear.",
   exampleCurl: (baseUrl) =>
     `curl -H 'Authorization: Bearer any-key' "${baseUrl}/v1/analytics/codex/workspaces/${CODEX_WORKSPACE}/usage?group=workspace&limit=5"`,
 };
@@ -289,45 +289,45 @@ const chatgpt: McpProviderDef = {
 const teams: McpProviderDef = {
   id: "teams",
   howTo: (baseUrl) =>
-    `Point @microsoft/microsoft-graph-client (or curl) at ${baseUrl} via the client's baseUrl option — clients target graph.microsoft.com, so graph.sandboxapis.dev is the drop-in prefix (teams.sandboxapis.dev aliases it). Auth is any Bearer token (real Graph wants an Entra JWT; any value passes here, but the header must be present — its absence answers Graph's real 401). This is the Microsoft Teams rendering of the org's team-messaging surface: the SAME channels, threads, and byte-identical message text the Slack host serves, in Graph's dialect — /v1.0/me/joinedTeams → /teams/{id}/channels → channel messages → replies, with OData paging (@odata.nextLink/$skiptoken; channel messages default to 20 per page). Everything in Graph outside the teamwork slice answers a coverage-honest Graph-shaped error.`,
+    `Point @microsoft/microsoft-graph-client (or curl) at ${baseUrl} via the client's baseUrl option. Clients target graph.microsoft.com, so graph.sandboxapis.dev is the drop-in prefix (teams.sandboxapis.dev aliases it). Auth is any Bearer token (real Graph wants an Entra JWT; any value passes here, but the header must be present, and its absence answers Graph's real 401). This is the Microsoft Teams rendering of the org's team-messaging surface: the SAME channels, threads, and byte-identical message text the Slack host serves, in Graph's dialect: /v1.0/me/joinedTeams, then /teams/{id}/channels, then channel messages, then replies, with OData paging (@odata.nextLink/$skiptoken; channel messages default to 20 per page). Everything in Graph outside the teamwork slice answers a coverage-honest Graph-shaped error.`,
   nextSteps: (baseUrl) => [
     `Teams: curl -H 'Authorization: Bearer any-token' "${baseUrl}/v1.0/me/joinedTeams"`,
     `Teams: curl -H 'Authorization: Bearer any-token' "${baseUrl}/v1.0/users"`,
   ],
   notGitReason:
-    "Teams (Microsoft Graph) is a team-messaging provider — no repositories or issues; the PRs and incidents its channels discuss live on the git hosts and trackers, with matching identities.",
+    "Teams (Microsoft Graph) is a team-messaging provider with no repositories or issues; the PRs and incidents its channels discuss live on the git hosts and trackers, with matching identities.",
   noIssuesReason:
-    "The Graph teamwork slice serves teams, channels, and messages, not an issue tracker — tracker surfaces live on jira./linear.; the incident-bridge chatter references the tracker's real incident issues.",
+    "The Graph teamwork slice serves teams, channels, and messages, not an issue tracker. Tracker surfaces live on jira./linear.; the incident-bridge chatter references the tracker's real incident issues.",
   exampleCurl: (baseUrl) => `curl -H 'Authorization: Bearer any-token' "${baseUrl}/v1.0/me/joinedTeams"`,
 };
 
 const sentry: McpProviderDef = {
   id: "sentry",
   howTo: (baseUrl) =>
-    `Point a Sentry API client at ${baseUrl} — paths are /api/0/…, exactly like sentry.io. sentry-cli takes --url (or SENTRY_URL); the official sentry-mcp server takes --host / SENTRY_HOST. Auth is a Bearer token (any value is accepted here). This is the org's ERROR TRACKING surface: projects are the services the org deploys, issues are deduplicated error signatures, and an event's stack frames name REAL files at REAL commit shas — take a frame's filename and lineNo here and fetch the same file at the same sha from the git host, and the source lines match. The incident the trackers and chat hosts discuss is the same incident firing here.`,
+    `Point a Sentry API client at ${baseUrl}. Paths are /api/0/…, exactly like sentry.io. sentry-cli takes --url (or SENTRY_URL); the official sentry-mcp server takes --host / SENTRY_HOST. Auth is a Bearer token (any value is accepted here). This is the org's ERROR TRACKING surface: projects are the services the org deploys, issues are deduplicated error signatures, and an event's stack frames name REAL files at REAL commit shas: take a frame's filename and lineNo here and fetch the same file at the same sha from the git host, and the source lines match. The incident the trackers and chat hosts discuss is the same incident firing here.`,
   nextSteps: (baseUrl, org) => [
     `Sentry: curl -H 'Authorization: Bearer anything' "${baseUrl}/api/0/organizations/${org}/projects/"`,
     `Sentry: curl -H 'Authorization: Bearer anything' "${baseUrl}/api/0/organizations/${org}/issues/<issue_id>/events/latest/"`,
   ],
   notGitReason:
-    "Sentry is an error-tracking provider — it lists the repositories linked to the org and the commits a release shipped, but the git objects themselves (trees, blobs, refs) live on the git hosts. A stack frame here names a path and a sha you can fetch there.",
+    "Sentry is an error-tracking provider. It lists the repositories linked to the org and the commits a release shipped, but the git objects themselves (trees, blobs, refs) live on the git hosts. A stack frame here names a path and a sha you can fetch there.",
   noIssuesReason:
-    "Sentry's 'issues' are deduplicated ERROR SIGNATURES, not tracker tickets — a different grain with a different id space. The tracker issue filed for the same incident lives on jira./linear./gh., and the Sentry issue's assignee is that incident's commander.",
+    "Sentry's 'issues' are deduplicated ERROR SIGNATURES, not tracker tickets: a different grain with a different id space. The tracker issue filed for the same incident lives on jira./linear./gh., and the Sentry issue's assignee is that incident's commander.",
   exampleCurl: (baseUrl, org) => `curl -H 'Authorization: Bearer anything' "${baseUrl}/api/0/organizations/${org}/projects/"`,
 };
 
 const pagerduty: McpProviderDef = {
   id: "pagerduty",
   howTo: (baseUrl) =>
-    `Point a PagerDuty API client at ${baseUrl} — paths are root-level (/incidents, /services, /oncalls), exactly like api.pagerduty.com, with no version prefix: PagerDuty versions in the Accept header. The official PagerDuty MCP server takes PAGERDUTY_API_HOST; pdpyras takes PDSession(url=...); the Go and Node SDKs take a base-URL option. Auth is 'Authorization: Token token=<key>' (any value is accepted here). This is the org's ON-CALL surface: services are what the org deploys, escalation policies and schedules decide who is woken, and an incident's log entries are the real timeline — alert fired, page sent, page acknowledged, fix resolved. ONE THING TO KNOW: GET /incidents defaults to the last month (PagerDuty's own default) and this universe's incident is older, so pass date_range=all.`,
+    `Point a PagerDuty API client at ${baseUrl}. Paths are root-level (/incidents, /services, /oncalls), exactly like api.pagerduty.com, with no version prefix: PagerDuty versions in the Accept header. The official PagerDuty MCP server takes PAGERDUTY_API_HOST; pdpyras takes PDSession(url=...); the Go and Node SDKs take a base-URL option. Auth is 'Authorization: Token token=<key>' (any value is accepted here). This is the org's ON-CALL surface: services are what the org deploys, escalation policies and schedules decide who is woken, and an incident's log entries are the real timeline: alert fired, page sent, page acknowledged, fix resolved. ONE THING TO KNOW: GET /incidents defaults to the last month (PagerDuty's own default) and this universe's incident is older, so pass date_range=all.`,
   nextSteps: (baseUrl) => [
     `PagerDuty: curl -H 'Authorization: Token token=anything' "${baseUrl}/incidents?date_range=all"`,
     `PagerDuty: curl -H 'Authorization: Token token=anything' "${baseUrl}/oncalls"`,
   ],
   notGitReason:
-    "PagerDuty is an incident-response provider — it has no repositories, commits or branches at all. The service an incident fires on maps 1:1 to a component on the git hosts, and the pull request that fixed it lives there.",
+    "PagerDuty is an incident-response provider. It has no repositories, commits or branches at all. The service an incident fires on maps 1:1 to a component on the git hosts, and the pull request that fixed it lives there.",
   noIssuesReason:
-    "PagerDuty 'incidents' are pages, not tracker tickets — a different grain with a different id space. The tracker issue filed for the same incident lives on jira./linear./gh., and the person PagerDuty paged is that issue's assignee.",
+    "PagerDuty 'incidents' are pages, not tracker tickets: a different grain with a different id space. The tracker issue filed for the same incident lives on jira./linear./gh., and the person PagerDuty paged is that issue's assignee.",
   exampleCurl: (baseUrl) => `curl -H 'Authorization: Token token=anything' "${baseUrl}/incidents?date_range=all"`,
 };
 
@@ -337,9 +337,9 @@ const pagerduty: McpProviderDef = {
 //
 // NEITHER RENDERER GATES ON ANYTHING LATER, which is what makes these two defs
 // simpler than the zendesk/circleci/buildkite/statuspage ones beside them: no
-// row here reads the hello-15 … hello-20 canon,
+// row here reads the hello-15 … hello-22 canon,
 // so every generation from hello-14 on serves this surface in full. Live
-// (hello-20 since the 2026-09-14 cutover), the -g12 pins (hello-20), the -g11
+// (hello-22 since the 2026-10-24 cutover), the -g12 pins (hello-20), the -g11
 // pins (hello-16), the -g10 pins (hello-15) and the -g9 pins (hello-14) all
 // answer everything; only the -g8 pins (hello-13) predate the CRM and refuse
 // it. Say all of them, because "the newest pin" silently means a different host
@@ -347,9 +347,9 @@ const pagerduty: McpProviderDef = {
 // naming -g9 as newest after the -g10 wave landed.
 //
 // AND NAME LIVE'S GENERATION SEPARATELY FROM THE NEWEST PIN'S, INCLUDING WHEN
-// THEY AGREE. They agree today: the -g12 wave of 2026-09-14 froze twenty-one
-// pins on hello-20, which is what live rolls. They have agreed before, never
-// for long — the gap reopens at the next cutover, and between 2026-09-12 and
+// THEY AGREE. They agreed from the -g12 wave of 2026-09-14, which froze
+// twenty-one pins on hello-20, until the 2026-10-22 hello-21 cutover reopened
+// the gap; they have agreed before, never for long, and between 2026-09-12 and
 // the -g12 wave it was FOUR generations wide, because the 2026-09-11 "skip G12"
 // ruling declined a generation at four cutovers in a row before the founder
 // reversed it. So a sentence that FUSES the two facts is wrong even now, while
@@ -364,32 +364,32 @@ const pagerduty: McpProviderDef = {
 const salesforce: McpProviderDef = {
   id: "salesforce",
   howTo: (baseUrl) =>
-    `Point a Salesforce client at ${baseUrl} as its INSTANCE URL — jsforce takes instanceUrl on the Connection constructor, simple-salesforce takes instance_url, the sf CLI takes --instance-url. Paths mirror an org exactly: /services/data for the version list, /services/data/v67.0/... for everything else. Any access token, or none, is accepted. WHAT IS SERVED, exactly four operations: GET /services/data (37 versions, a verbatim capture of a real org's response); GET /services/data/v67.0/sobjects/{obj}/describe; GET /services/data/v67.0/sobjects/{obj}/{id}; and GET /services/data/v67.0/query?q=<SOQL> — over FOUR objects only: Account, Contact, Opportunity, Case. THE SOQL IS A BOUNDED SUBSET: SELECT (and COUNT()), FROM, WHERE with AND/OR/NOT/parens/IN/LIKE, ORDER BY with NULLS placement, LIMIT and OFFSET. Anything else — a relationship subquery, a parent field path like Account.Name, GROUP BY, SUM(), FIELDS(ALL), WITH SECURITY_ENFORCED, a week-based date literal — answers 400 NAMING the construct, never a wrong answer and never a silently-ignored clause. Everything outside those four operations (describeGlobal, /queryAll, list views, search, limits, analytics, bulk) answers Salesforce's own 404 with an x-sandboxapis-coverage header, meaning NOT BUILT YET rather than broken — deliberately not an empty result set, which would be a lie you could not detect. ONE THING TO KNOW ABOUT PINS: the CRM ships with generation hello-14, and every generation after it inherits it. Live rides hello-20. The newest pin, sf-v67-g12, rides hello-20 — the SAME generation live rides, as of the 2026-09-14 freeze — and sf-v67-g11 rides hello-16, sf-v67-g10 hello-15, sf-v67-g9 hello-14. All four operations answer on all five of those. Only sf-v67-g8 is older — it rides hello-13, which predates the CRM, so there the three CRM operations answer a 404 that says so in words while /services/data keeps working. Check ${baseUrl.replace(/^https:\/\/[^/]+/, "https://sandboxapis.dev")}/providers/salesforce for what has landed since.`,
+    `Point a Salesforce client at ${baseUrl} as its INSTANCE URL. jsforce takes instanceUrl on the Connection constructor, simple-salesforce takes instance_url, the sf CLI takes --instance-url. Paths mirror an org exactly: /services/data for the version list, /services/data/v67.0/... for everything else. Any access token, or none, is accepted. WHAT IS SERVED, exactly four operations: GET /services/data (37 versions, a verbatim capture of a real org's response); GET /services/data/v67.0/sobjects/{obj}/describe; GET /services/data/v67.0/sobjects/{obj}/{id}; and GET /services/data/v67.0/query?q=<SOQL>, over FOUR objects only: Account, Contact, Opportunity, Case. THE SOQL IS A BOUNDED SUBSET: SELECT (and COUNT()), FROM, WHERE with AND/OR/NOT/parens/IN/LIKE, ORDER BY with NULLS placement, LIMIT and OFFSET. Anything else (a relationship subquery, a parent field path like Account.Name, GROUP BY, SUM(), FIELDS(ALL), WITH SECURITY_ENFORCED, a week-based date literal) answers 400 NAMING the construct, never a wrong answer and never a silently-ignored clause. Everything outside those four operations (describeGlobal, /queryAll, list views, search, limits, analytics, bulk) answers Salesforce's own 404 with an x-sandboxapis-coverage header, meaning NOT BUILT YET rather than broken, and deliberately not an empty result set, which would be a lie you could not detect. ONE THING TO KNOW ABOUT PINS: the CRM ships with generation hello-14, and every generation after it inherits it. Live rides hello-22. The newest pin, sf-v67-g12, rides hello-20 (behind live since the 2026-10-22 cutover), and sf-v67-g11 rides hello-16, sf-v67-g10 hello-15, sf-v67-g9 hello-14. All four operations answer on all five of those. Only sf-v67-g8 is older: it rides hello-13, which predates the CRM, so there the three CRM operations answer a 404 that says so in words while /services/data keeps working. Check ${baseUrl.replace(/^https:\/\/[^/]+/, "https://sandboxapis.dev")}/providers/salesforce for what has landed since.`,
   nextSteps: (baseUrl) => [
-    `Salesforce: curl "${baseUrl}/services/data/v67.0/sobjects/Account/describe"  # the served field list — read it before building a SELECT`,
+    `Salesforce: curl "${baseUrl}/services/data/v67.0/sobjects/Account/describe"  # the served field list; read it before building a SELECT`,
     `Salesforce: curl "${baseUrl}/services/data/v67.0/query?q=SELECT+Id,Name,Industry+FROM+Account+ORDER+BY+Name"`,
     `Salesforce: curl "${baseUrl}/services/data/v67.0/query?q=SELECT+COUNT()+FROM+Case+WHERE+Priority+=+'High'"`,
   ],
   notGitReason:
-    "Salesforce is a CRM — it has no repositories, commits or branches. The engineering side of this org's story lives on the git hosts (gh., gl., bb., ado.), and the two meet in real data: a Case here names the same incident PagerDuty paged for, and the engineer it was escalated to is a member of the org the git hosts serve.",
+    "Salesforce is a CRM. It has no repositories, commits or branches. The engineering side of this org's story lives on the git hosts (gh., gl., bb., ado.), and the two meet in real data: a Case here names the same incident PagerDuty paged for, and the engineer it was escalated to is a member of the org the git hosts serve.",
   noIssuesReason:
-    "Salesforce Cases are support tickets, not tracker issues — a different grain with a different id space, and both are served. Query Cases here; the engineering issue for the same problem lives on jira./linear./gh. The tickets customers filed during the outage carry the same incident id Sentry and PagerDuty serve, so the two grains are joinable rather than parallel.",
+    "Salesforce Cases are support tickets, not tracker issues: a different grain with a different id space, and both are served. Query Cases here; the engineering issue for the same problem lives on jira./linear./gh. The tickets customers filed during the outage carry the same incident id Sentry and PagerDuty serve, so the two grains are joinable rather than parallel.",
   exampleCurl: (baseUrl) => `curl "${baseUrl}/services/data/v67.0/query?q=SELECT+Id,Name+FROM+Account+LIMIT+5"`,
 };
 
 const hubspot: McpProviderDef = {
   id: "hubspot",
   howTo: (baseUrl) =>
-    `Point a HubSpot client at ${baseUrl} — @hubspot/api-client takes basePath on the Client constructor, and every SDK takes a base URL; it replaces https://api.hubapi.com. Paths mirror HubSpot exactly. Any token, or none, is accepted. WHAT IS SERVED: companies, contacts, deals (written /crm/v3/objects/0-3, the spelling HubSpot's own document uses) and tickets, each with its collection, its get-by-id, its POST .../search and its POST .../batch/read, with paging.next.after cursors, ?properties=, ?propertiesWithHistory= and ?associations=; plus the property catalogue and its groups under /crm/v3/properties/, both pipelines and their stages under /crm/v3/pipelines/, the owner roster at /crm/v3/owners, and the custom-object schema list. READ THIS BEFORE YOU START: the CRM data itself arrives in generation hello-14, and every generation after it inherits it. Live rides hello-20. The newest pin, hubspot-v3-g12, rides hello-20 — the SAME generation live rides, as of the 2026-09-14 freeze — and hubspot-v3-g11 rides hello-16, hubspot-v3-g10 hello-15, hubspot-v3-g9 hello-14. All five of those carry the CRM. Only hubspot-v3-g8 is older — it rides hello-13 and answers those rows with a 404 whose message says exactly that ("This universe predates the CRM canon..."). It is NOT an empty list, deliberately: an empty collection would tell you this org has no contacts, which is false and which no SDK could detect. Two more 404s to tell apart — a path outside coverage carries x-sandboxapis-coverage-kind: endpoint, and a record that simply does not exist carries no coverage header at all. Values in enumerated properties are this portal's own vocabulary; read /crm/v3/properties/{objectType} to learn it, exactly as you would against a real HubSpot portal. Check ${baseUrl.replace(/^https:\/\/[^/]+/, "https://sandboxapis.dev")}/providers/hubspot for the row-by-row coverage.`,
+    `Point a HubSpot client at ${baseUrl}. @hubspot/api-client takes basePath on the Client constructor, and every SDK takes a base URL; it replaces https://api.hubapi.com. Paths mirror HubSpot exactly. Any token, or none, is accepted. WHAT IS SERVED: companies, contacts, deals (written /crm/v3/objects/0-3, the spelling HubSpot's own document uses) and tickets, each with its collection, its get-by-id, its POST .../search and its POST .../batch/read, with paging.next.after cursors, ?properties=, ?propertiesWithHistory= and ?associations=; plus the property catalogue and its groups under /crm/v3/properties/, both pipelines and their stages under /crm/v3/pipelines/, the owner roster at /crm/v3/owners, and the custom-object schema list. READ THIS BEFORE YOU START: the CRM data itself arrives in generation hello-14, and every generation after it inherits it. Live rides hello-22. The newest pin, hubspot-v3-g12, rides hello-20 (behind live since the 2026-10-22 cutover), and hubspot-v3-g11 rides hello-16, hubspot-v3-g10 hello-15, hubspot-v3-g9 hello-14. All five of those carry the CRM. Only hubspot-v3-g8 is older: it rides hello-13 and answers those rows with a 404 whose message says exactly that ("This universe predates the CRM canon..."). It is NOT an empty list, deliberately: an empty collection would tell you this org has no contacts, which is false and which no SDK could detect. Two more 404s to tell apart: a path outside coverage carries x-sandboxapis-coverage-kind: endpoint, and a record that simply does not exist carries no coverage header at all. Values in enumerated properties are this portal's own vocabulary; read /crm/v3/properties/{objectType} to learn it, exactly as you would against a real HubSpot portal. Check ${baseUrl.replace(/^https:\/\/[^/]+/, "https://sandboxapis.dev")}/providers/hubspot for the row-by-row coverage.`,
   nextSteps: (baseUrl) => [
     `HubSpot: curl "${baseUrl}/crm/v3/objects/companies?limit=5&associations=contacts,deals,tickets"`,
     `HubSpot: curl "${baseUrl}/crm/v3/properties/tickets"  # the vocabulary every ticket property uses`,
     `HubSpot: curl -X POST "${baseUrl}/crm/v3/objects/0-3/search" -H 'content-type: application/json' -d '{"filterGroups":[{"filters":[{"propertyName":"dealstage","operator":"EQ","value":"closed-lost"}]}]}'`,
   ],
   notGitReason:
-    "HubSpot is a CRM — it has no repositories, commits or branches. The engineering side of this org's story lives on the git hosts (gh., gl., bb., ado.).",
+    "HubSpot is a CRM. It has no repositories, commits or branches. The engineering side of this org's story lives on the git hosts (gh., gl., bb., ado.).",
   noIssuesReason:
-    "HubSpot tickets are support tickets, not tracker issues — a different grain with a different id space. Read them at /crm/v3/objects/tickets; the engineering issue for the same problem lives on jira./linear./gh., and during the outage window the two are about the same failure.",
+    "HubSpot tickets are support tickets, not tracker issues: a different grain with a different id space. Read them at /crm/v3/objects/tickets; the engineering issue for the same problem lives on jira./linear./gh., and during the outage window the two are about the same failure.",
   exampleCurl: (baseUrl) => `curl "${baseUrl}/crm/v3/objects/companies?limit=5"`,
 };
 
@@ -397,31 +397,31 @@ const hubspot: McpProviderDef = {
 const zendesk: McpProviderDef = {
   id: "zendesk",
   howTo: (baseUrl) =>
-    `Point a Zendesk Support client at ${baseUrl} — paths are /api/v2/… exactly as on a real <subdomain>.zendesk.com, and the .json suffix Zendesk's own clients append is accepted too. node-zendesk takes endpointUri; zenpy takes url=; the Ruby client takes config.url. Auth is HTTP Basic (any value is accepted here). READ THIS BEFORE YOU PLAN A WALK: this host's surface arrived across TWO generations, so which host you point at decides what answers. The TICKET QUEUE — tickets with their comments, audits and metrics, the one user space (agents/admins and end users, told apart by 'role'), organizations, groups and memberships, requests, satisfaction ratings, tags, search and the incremental exports — ships with hello-14. The DESK CONFIGURATION — macros, views, triggers with revision history, automations, SLA policies, brands, ticket fields and forms, the suspended queue and its skips, saved searches, email notifications, attachments, job statuses and the admin audit_logs — ships with hello-15. The LIVE host rides hello-20, which inherits both, and answers all of it — and so does the newest pin, zendesk-v2-g12, frozen on hello-20 — the SAME generation live rides, as of the 2026-09-14 freeze. The zendesk-v2-g11 pin rides hello-16 and the zendesk-v2-g10 pin hello-15, and both answer all of it as well. The zendesk-v2-g9 pin rides hello-14: the queue answers, the configuration rows answer a 404 naming hello-15. The zendesk-v2-g8 pin rides hello-13, older than the desk itself: every desk endpoint answers a 404 naming hello-14 and the locale endpoints keep working. Never an empty array pretending the org has no desk, on any of those six. A pin never gains a later generation — its bytes never move. WHAT IS UNCOVERED ON EVERY GENERATION: the add-on surfaces — custom objects, skill-based routing, IT asset management, task lists, dynamic content, targets and the sharing agreements — each answering an explicit coverage 404. When the desk answers: both pagination grammars work and you get the one you ask for ('page'+'per_page' for the offset envelope, 'page[size]'+'page[after]' for the cursor one). Check ${baseUrl.replace(/^https:\/\/[^/]+/, "https://sandboxapis.dev")}/providers/zendesk for the row-by-row picture.`,
+    `Point a Zendesk Support client at ${baseUrl}. Paths are /api/v2/… exactly as on a real <subdomain>.zendesk.com, and the .json suffix Zendesk's own clients append is accepted too. node-zendesk takes endpointUri; zenpy takes url=; the Ruby client takes config.url. Auth is HTTP Basic (any value is accepted here). READ THIS BEFORE YOU PLAN A WALK: this host's surface arrived across TWO generations, so which host you point at decides what answers. The TICKET QUEUE ships with hello-14: tickets with their comments, audits and metrics, the one user space (agents/admins and end users, told apart by 'role'), organizations, groups and memberships, requests, satisfaction ratings, tags, search and the incremental exports. The DESK CONFIGURATION ships with hello-15: macros, views, triggers with revision history, automations, SLA policies, brands, ticket fields and forms, the suspended queue and its skips, saved searches, email notifications, attachments, job statuses and the admin audit_logs. The LIVE host rides hello-22, which inherits both and answers all of it, and so does the newest pin, zendesk-v2-g12, frozen on hello-20: behind live since the 2026-10-22 cutover. The zendesk-v2-g11 pin rides hello-16 and the zendesk-v2-g10 pin hello-15, and both answer all of it as well. The zendesk-v2-g9 pin rides hello-14: the queue answers, the configuration rows answer a 404 naming hello-15. The zendesk-v2-g8 pin rides hello-13, older than the desk itself: every desk endpoint answers a 404 naming hello-14 and the locale endpoints keep working. Never an empty array pretending the org has no desk, on any of those six. A pin never gains a later generation; its bytes never move. WHAT IS UNCOVERED ON EVERY GENERATION: the add-on surfaces (custom objects, skill-based routing, IT asset management, task lists, dynamic content, targets and the sharing agreements), each answering an explicit coverage 404. When the desk answers: both pagination grammars work and you get the one you ask for ('page'+'per_page' for the offset envelope, 'page[size]'+'page[after]' for the cursor one). Check ${baseUrl.replace(/^https:\/\/[^/]+/, "https://sandboxapis.dev")}/providers/zendesk for the row-by-row picture.`,
   nextSteps: (baseUrl) => [
     `Zendesk: curl "${baseUrl}/api/v2/locales.json"`,
     `Zendesk: curl "${baseUrl}/api/v2/locales/current.json"`,
-    `Zendesk (the queue; needs hello-14 — a 404 naming that generation means the snapshot is older): curl "${baseUrl}/api/v2/tickets.json?per_page=5"`,
-    `Zendesk (the rules that route it; needs hello-15 or later — live and the zendesk-v2-g12, zendesk-v2-g11 and zendesk-v2-g10 pins, not the older ones): curl "${baseUrl}/api/v2/macros.json"`,
+    `Zendesk (the queue; needs hello-14; a 404 naming that generation means the snapshot is older): curl "${baseUrl}/api/v2/tickets.json?per_page=5"`,
+    `Zendesk (the rules that route it; needs hello-15 or later: live and the zendesk-v2-g12, zendesk-v2-g11 and zendesk-v2-g10 pins, not the older ones): curl "${baseUrl}/api/v2/macros.json"`,
   ],
   notGitReason:
-    "Zendesk is a customer-support desk — it has no repositories, commits or branches. The engineering work behind a support escalation lives on the git hosts, and the ticket that asked for it lives here.",
+    "Zendesk is a customer-support desk. It has no repositories, commits or branches. The engineering work behind a support escalation lives on the git hosts, and the ticket that asked for it lives here.",
   noIssuesReason:
-    "Zendesk 'tickets' are support conversations with an end user, not tracker issues — a different grain, a different id space and a different audience. Both are rendered, and the join between them is real: GET /api/v2/tickets/{id}/related carries jira_issue_ids, which is the tracker row jira./linear./gh. serve for the same escalation. (The Zendesk half needs generation hello-14; on an older snapshot it answers a 404 that says so.)",
+    "Zendesk 'tickets' are support conversations with an end user, not tracker issues: a different grain, a different id space and a different audience. Both are rendered, and the join between them is real: GET /api/v2/tickets/{id}/related carries jira_issue_ids, which is the tracker row jira./linear./gh. serve for the same escalation. (The Zendesk half needs generation hello-14; on an older snapshot it answers a 404 that says so.)",
   exampleCurl: (baseUrl) => `curl "${baseUrl}/api/v2/locales.json"`,
 };
 
 const circleci: McpProviderDef = {
   id: "circleci",
   howTo: (baseUrl) =>
-    `Point a CircleCI client at ${baseUrl} — paths are /api/v2/… exactly as on circleci.com, and both spellings of a project slug work (gh/olympus-labs/<repo> and the URL-escaped gh%2Folympus-labs%2F<repo>). mcp-server-circleci takes CIRCLECI_BASE_URL; the circleci CLI takes --host; anything else takes a base URL. Auth is a Circle-Token header or a bearer token, and any value — or none — is accepted here. WHAT IS RENDERED: the CI story the universe already tells. A PIPELINE is one commit that CI ran on, its WORKFLOWS are the runs on that commit ("ci", "lint", "release") and its JOBS are their jobs — the same runs, the same shas and the same people that gh./gl./bb./dev.azure hosts serve for the identical commit, which is the point of reading it here. Also served: /me and /user/{id} over the org roster, /organization/{org-slug-or-id}, /project/{project-slug} over the canonical repositories, and the ACCOUNT CONFIGURATION around a build — contexts and their restrictions, project environment variables, pipeline definitions, triggers and the outbound webhook. WHAT IS NOT: there is no build LOG on this host, because CircleCI API v2 declares no log endpoint at all — read the same job's output on gh./gl./bb./ado. instead. The aggregate insights summaries and time-series, and the whole deploy/rollback family, answer an explicit coverage 404; a usage-export job by id answers CircleCI's own 404 with an x-sandboxapis-refusal header, because the job is created by a POST this universe refuses and no such id can exist. ONE GENERATION NOTE: schedules, test results and flaky tests, checkout keys, project settings, OIDC claims, identity groups, the OTLP exporter, the URL orb source, config policies with their decision log, and /me/collaborations all read the CI configuration canon, which ships with generation hello-15. Live rides hello-20, which inherits it, and answers them; so do the circleci-v2-g12 pin on hello-20 (the SAME generation live rides, as of the 2026-09-14 freeze), the circleci-v2-g11 pin on hello-16 and the circleci-v2-g10 pin on hello-15 itself; every pin registered before that generation answers a 404 naming it, never an empty collection, and never gains it later because a pin's bytes do not move. Check ${baseUrl.replace(/^https:\/\/[^/]+/, "https://sandboxapis.dev")}/providers/circleci for the row-by-row picture.`,
+    `Point a CircleCI client at ${baseUrl}. Paths are /api/v2/… exactly as on circleci.com, and both spellings of a project slug work (gh/olympus-labs/<repo> and the URL-escaped gh%2Folympus-labs%2F<repo>). mcp-server-circleci takes CIRCLECI_BASE_URL; the circleci CLI takes --host; anything else takes a base URL. Auth is a Circle-Token header or a bearer token, and any value, or none, is accepted here. WHAT IS RENDERED: the CI story the universe already tells. A PIPELINE is one commit that CI ran on, its WORKFLOWS are the runs on that commit ("ci", "lint", "release") and its JOBS are their jobs: the same runs, the same shas and the same people that gh./gl./bb./dev.azure hosts serve for the identical commit, which is the point of reading it here. Also served: /me and /user/{id} over the org roster, /organization/{org-slug-or-id}, /project/{project-slug} over the canonical repositories, and the ACCOUNT CONFIGURATION around a build (contexts and their restrictions, project environment variables, pipeline definitions, triggers and the outbound webhook). WHAT IS NOT: there is no build LOG on this host, because CircleCI API v2 declares no log endpoint at all; read the same job's output on gh./gl./bb./ado. instead. The aggregate insights summaries and time-series, and the whole deploy/rollback family, answer an explicit coverage 404; a usage-export job by id answers CircleCI's own 404 with an x-sandboxapis-refusal header, because the job is created by a POST this universe refuses and no such id can exist. ONE GENERATION NOTE: schedules, test results and flaky tests, checkout keys, project settings, OIDC claims, identity groups, the OTLP exporter, the URL orb source, config policies with their decision log, and /me/collaborations all read the CI configuration canon, which ships with generation hello-15. Live rides hello-22, which inherits it, and answers them; so do the circleci-v2-g12 pin on hello-20 (behind live since the 2026-10-22 cutover), the circleci-v2-g11 pin on hello-16 and the circleci-v2-g10 pin on hello-15 itself; every pin registered before that generation answers a 404 naming it, never an empty collection, and never gains it later because a pin's bytes do not move. Check ${baseUrl.replace(/^https:\/\/[^/]+/, "https://sandboxapis.dev")}/providers/circleci for the row-by-row picture.`,
   nextSteps: (baseUrl) => [
     `CircleCI: curl "${baseUrl}/api/v2/me"`,
     `CircleCI: curl "${baseUrl}/api/v2/project/gh/olympus-labs/parthenon/pipeline"`,
     `CircleCI (take a pipeline id from the list above): curl "${baseUrl}/api/v2/pipeline/<id>/workflow"`,
   ],
   notGitReason:
-    "CircleCI is a CI service, not a git host — it builds repositories that live somewhere else. Every project here names its repository on gh.sandboxapis.dev, and a pipeline's vcs.revision is the real sha you can fetch there.",
+    "CircleCI is a CI service, not a git host. It builds repositories that live somewhere else. Every project here names its repository on gh.sandboxapis.dev, and a pipeline's vcs.revision is the real sha you can fetch there.",
   noIssuesReason:
     "CircleCI has no issue surface at all: a failing job is a build result, not a tracked issue. The issue opened about a red build lives on jira., linear. or gh., and the commit it names is the one this host's pipeline ran.",
   exampleCurl: (baseUrl) => `curl "${baseUrl}/api/v2/me"`,
@@ -430,7 +430,7 @@ const circleci: McpProviderDef = {
 const buildkite: McpProviderDef = {
   id: "buildkite",
   howTo: (baseUrl) =>
-    `Point a Buildkite client at ${baseUrl} — paths are /v2/… exactly as on api.buildkite.com. go-buildkite takes WithBaseURL; pybuildkite takes base_url; the bk CLI reads BUILDKITE_REST_API_ENDPOINT. Auth is 'Authorization: Bearer <anything>', and no token at all works too. WHAT IS RENDERED: the CI walk, end to end — the organization, its pipelines (one per repository CI workflow), each pipeline's builds, each build's jobs, and each job's LOG OUTPUT with the real command output, exit code and per-line timestamps. The builds are the SAME runs gl./bb./ado. serve for the same commits, at the same SHAs, by the same people — a build here and a pipeline run there are one run in two dialects. ALSO SERVED, AS HONEST EMPTY LISTS: the organization's agent list and the build/job annotation lists. Buildkite returns only CONNECTED AND STOPPING agents and no build here is in flight — every one has finished — so [] is the true answer rather than a gap; an annotation is uploaded by 'buildkite-agent annotate' from inside a job, and no job in this universe ran it. Those are 200s with an empty array, never 404s. WHAT IS NOT: the custom emoji catalogue, because Buildkite publishes it in a repository that carries no licence of any kind — there is no grant to republish it, and serving the handful of entries the docs quote would misstate how complete it is. It answers an explicit coverage 404 rather than an invented value. The whole of cluster, queue, schedule, template, trigger, portal and rule administration is uncovered and says so. TWO GENERATION NOTES: job logs need universe generation hello-13 or later, and ARTIFACTS — metadata, content and download — need hello-15, the generation that gave the canonical build artifact the job link a Buildkite artifact's job_id hangs off. Live rides hello-20, which inherits it, and so do the buildkite-v2-g12 pin on hello-20 (the SAME generation live rides, as of the 2026-09-14 freeze), the buildkite-v2-g11 pin on hello-16 and the buildkite-v2-g10 pin on hello-15 itself. On an older snapshot each answers a 404 that names the generation and the rest of the walk still serves. Check ${baseUrl.replace(/^https:\/\/[^/]+/, "https://sandboxapis.dev")}/providers/buildkite for the row-by-row picture.`,
+    `Point a Buildkite client at ${baseUrl}. Paths are /v2/… exactly as on api.buildkite.com. go-buildkite takes WithBaseURL; pybuildkite takes base_url; the bk CLI reads BUILDKITE_REST_API_ENDPOINT. Auth is 'Authorization: Bearer <anything>', and no token at all works too. WHAT IS RENDERED: the CI walk, end to end: the organization, its pipelines (one per repository CI workflow), each pipeline's builds, each build's jobs, and each job's LOG OUTPUT with the real command output, exit code and per-line timestamps. The builds are the SAME runs gl./bb./ado. serve for the same commits, at the same SHAs, by the same people. A build here and a pipeline run there are one run in two dialects. ALSO SERVED, AS HONEST EMPTY LISTS: the organization's agent list and the build/job annotation lists. Buildkite returns only CONNECTED AND STOPPING agents and no build here is in flight (every one has finished), so [] is the true answer rather than a gap; an annotation is uploaded by 'buildkite-agent annotate' from inside a job, and no job in this universe ran it. Those are 200s with an empty array, never 404s. WHAT IS NOT: the custom emoji catalogue, because Buildkite publishes it in a repository that carries no licence of any kind; there is no grant to republish it, and serving the handful of entries the docs quote would misstate how complete it is. It answers an explicit coverage 404 rather than an invented value. The whole of cluster, queue, schedule, template, trigger, portal and rule administration is uncovered and says so. TWO GENERATION NOTES: job logs need universe generation hello-13 or later, and ARTIFACTS (metadata, content and download) need hello-15, the generation that gave the canonical build artifact the job link a Buildkite artifact's job_id hangs off. Live rides hello-22, which inherits it, and so do the buildkite-v2-g12 pin on hello-20 (behind live since the 2026-10-22 cutover), the buildkite-v2-g11 pin on hello-16 and the buildkite-v2-g10 pin on hello-15 itself. On an older snapshot each answers a 404 that names the generation and the rest of the walk still serves. Check ${baseUrl.replace(/^https:\/\/[^/]+/, "https://sandboxapis.dev")}/providers/buildkite for the row-by-row picture.`,
   nextSteps: (baseUrl) => [
     `Buildkite: curl "${baseUrl}/v2/organizations"`,
     `Buildkite: curl "${baseUrl}/v2/organizations/olympus-labs/pipelines"`,
@@ -438,7 +438,7 @@ const buildkite: McpProviderDef = {
     `Buildkite (the log, which is the point): follow a build's jobs[].log_url, or append .txt to it for the raw output`,
   ],
   notGitReason:
-    "Buildkite is a CI/CD platform — it builds repositories, it does not host them. Every pipeline here names the repository it builds, and that repository is a real, browsable one on gh./gl./bb./ado.; a build's `commit` is the same 40-character SHA those hosts serve.",
+    "Buildkite is a CI/CD platform. It builds repositories, it does not host them. Every pipeline here names the repository it builds, and that repository is a real, browsable one on gh./gl./bb./ado.; a build's `commit` is the same 40-character SHA those hosts serve.",
   noIssuesReason:
     "Buildkite has no issue tracker. A red build in this universe belongs to a story that continues elsewhere: the commit it built is on the git hosts, the incident it caused is on sentry./pd., and the issue that tracks the fix is on jira./linear./gh.",
   exampleCurl: (baseUrl) => `curl "${baseUrl}/v2/organizations/olympus-labs/pipelines"`,
@@ -447,7 +447,7 @@ const buildkite: McpProviderDef = {
 const statuspage: McpProviderDef = {
   id: "statuspage",
   howTo: (baseUrl) =>
-    `Point a Statuspage client at ${baseUrl} — paths are /v1/… exactly as on api.statuspage.io, so a caller keeps writing /v1/pages/{page_id}/incidents unchanged. Auth is 'Authorization: OAuth <anything>' (the prefix is OAuth, NOT Bearer — that is Statuspage's own scheme), and no token at all works too; the ?api_key= query param the docs describe is accepted as well. A .json suffix on any path is tolerated, as the real API's own examples use. WHAT IS RENDERED: the customer-facing status story, end to end — the org's two status pages (one public, one partner-only), the components each page publishes, every incident and scheduled maintenance posted to them, each incident's full update cadence (investigating -> identified -> monitoring -> resolved) with per-component old_status/new_status transitions, the published postmortems, and the page's subscribers with their counts and by-state histogram. THE INCIDENTS ARE THE SAME OUTAGES sentry./pd. serve the responder-facing half of: one canonical incident, the same timestamps, the same affected services — a Statuspage incident and a PagerDuty status-page post are one event in two dialects. Component status is LIVE and derived from the incident record: a component reads degraded_performance or major_outage only while a post that impacts it is still open. WHAT IS NOT: component groups, metrics and metrics providers, uptime calculations, page access users and groups, incident templates and the status embed config — this universe carries no canonical fact behind any of them, so each answers an explicit coverage 404 rather than an invented value or an empty list that would assert the fact is absent rather than unmodelled. ONE GENERATION NOTE: the unsubscribed roster IS served, and it needs generation hello-15 — the generation that gave this universe a subscription state meaning "unsubscribed" at all. Live rides hello-20, which inherits it, and answers it; so do the statuspage-v1-g12 pin on hello-20 (the SAME generation live rides, as of the 2026-09-14 freeze), the statuspage-v1-g11 pin on hello-16 and the statuspage-v1-g10 pin on hello-15 itself; a pin frozen earlier answers a 404 naming the generation rather than an empty list that would read as "nobody ever unsubscribed". Check ${baseUrl.replace(/^https:\/\/[^/]+/, "https://sandboxapis.dev")}/providers/statuspage for the row-by-row picture.`,
+    `Point a Statuspage client at ${baseUrl}. Paths are /v1/… exactly as on api.statuspage.io, so a caller keeps writing /v1/pages/{page_id}/incidents unchanged. Auth is 'Authorization: OAuth <anything>' (the prefix is OAuth, NOT Bearer; that is Statuspage's own scheme), and no token at all works too; the ?api_key= query param the docs describe is accepted as well. A .json suffix on any path is tolerated, as the real API's own examples use. WHAT IS RENDERED: the customer-facing status story, end to end: the org's two status pages (one public, one partner-only), the components each page publishes, every incident and scheduled maintenance posted to them, each incident's full update cadence (investigating -> identified -> monitoring -> resolved) with per-component old_status/new_status transitions, the published postmortems, and the page's subscribers with their counts and by-state histogram. THE INCIDENTS ARE THE SAME OUTAGES sentry./pd. serve the responder-facing half of: one canonical incident, the same timestamps, the same affected services. A Statuspage incident and a PagerDuty status-page post are one event in two dialects. Component status is LIVE and derived from the incident record: a component reads degraded_performance or major_outage only while a post that impacts it is still open. WHAT IS NOT: component groups, metrics and metrics providers, uptime calculations, page access users and groups, incident templates and the status embed config. This universe carries no canonical fact behind any of them, so each answers an explicit coverage 404 rather than an invented value or an empty list that would assert the fact is absent rather than unmodelled. ONE GENERATION NOTE: the unsubscribed roster IS served, and it needs generation hello-15, the generation that gave this universe a subscription state meaning "unsubscribed" at all. Live rides hello-22, which inherits it, and answers it; so do the statuspage-v1-g12 pin on hello-20 (behind live since the 2026-10-22 cutover), the statuspage-v1-g11 pin on hello-16 and the statuspage-v1-g10 pin on hello-15 itself; a pin frozen earlier answers a 404 naming the generation rather than an empty list that would read as "nobody ever unsubscribed". Check ${baseUrl.replace(/^https:\/\/[^/]+/, "https://sandboxapis.dev")}/providers/statuspage for the row-by-row picture.`,
   nextSteps: (baseUrl) => [
     `Statuspage: curl "${baseUrl}/v1/pages"`,
     `Statuspage (take a page id from that): curl "${baseUrl}/v1/pages/<page_id>/components"`,
@@ -455,15 +455,82 @@ const statuspage: McpProviderDef = {
     `Statuspage (the cross-host walk): the same incident is on pd. as a status-page post and on sentry. as the error that opened it`,
   ],
   notGitReason:
-    "Statuspage is a status-communication tool — it publishes what customers are told about an outage, and hosts no code. The incident behind a post is on sentry./pd.; the commit that caused it, and the one that fixed it, are on gh./gl./bb./ado. at the same SHAs.",
+    "Statuspage is a status-communication tool. It publishes what customers are told about an outage, and hosts no code. The incident behind a post is on sentry./pd.; the commit that caused it, and the one that fixed it, are on gh./gl./bb./ado. at the same SHAs.",
   noIssuesReason:
     "Statuspage has no issue tracker. A post here is the CUSTOMER-FACING half of a story tracked elsewhere: the responder's incident is on pd., the error is on sentry., and the follow-up issue is on jira./linear./gh.",
   exampleCurl: (baseUrl) => `curl "${baseUrl}/v1/pages"`,
 };
 
+const antigravity: McpProviderDef = {
+  id: "antigravity",
+  howTo: (baseUrl) =>
+    `Point a client for the Gemini Interactions API at ${baseUrl}, a base-URL swap. Paths are /v1beta/… exactly as on generativelanguage.googleapis.com. The JavaScript SDK (@google/genai) takes \`httpOptions: { baseUrl }\`; the Python SDK (google-genai) takes \`http_options={"base_url": ...}\`; both also read the GOOGLE_GEMINI_BASE_URL environment variable. Auth: any x-goog-api-key value, any ?key= value, any 'Authorization: Bearer' token, or none at all. WHAT IS RENDERED: the Antigravity managed agent's runs in this data set, read-only: the scheduled triggers, each trigger's executions, the interaction every execution started (status, usage, environment and its steps: the shell commands the agent ran and a short fact-only summary, never a thought step), the agent environments with a file listing at the commit the run worked on, and the credentials (ids, type, status and times only; no secret field exists). HOW TO FIND AN INTERACTION ID: there is no list of interactions (the real API answers "Method not found."), so walk GET /v1beta/triggers, then GET /v1beta/triggers/{id}/executions, and take trigger_executions[].interaction_id to GET /v1beta/interactions/{id}; Trigger.previous_interaction_id names a trigger's newest one. WHAT IS NOT: inference of any kind (POST /v1beta/interactions, models/...:generateContent and every other Gemini model path answer a refusal or a coverage 404), streaming (?stream=true), webhooks, voices, and every write (a 403 saying this universe is read-only). Live host only: no pinned snapshot exists for this provider yet. Check ${baseUrl.replace(/^https:\/\/[^/]+/, "https://sandboxapis.dev")}/providers/antigravity for the row-by-row picture.`,
+  nextSteps: (baseUrl) => [
+    `Google Antigravity: curl "${baseUrl}/v1beta/triggers"`,
+    `Google Antigravity (take a trigger id from that): curl "${baseUrl}/v1beta/triggers/<trigger_id>/executions"`,
+    `Google Antigravity (take an interaction_id from an execution): curl "${baseUrl}/v1beta/interactions/<interaction_id>"`,
+    `Google Antigravity (the cross-host walk): an interaction's labels name the repository, the pull request and the issue; the pull request is on gh./gl. and the issue on jira.`,
+  ],
+  notGitReason:
+    "Antigravity is a coding agent. It works on repositories, it does not host them. The pull requests its runs open are real, browsable ones on gh./gl./bb./ado., at the same numbers and head SHAs; an environment's file listing is the repository tree at the commit the run worked on.",
+  noIssuesReason:
+    "Antigravity has no issue tracker. A run here starts from an issue tracked on jira./linear./gh., and its labels name that issue's key.",
+  exampleCurl: (baseUrl) => `curl "${baseUrl}/v1beta/triggers"`,
+};
+
+const datadog: McpProviderDef = {
+  id: "datadog",
+  howTo: (baseUrl) =>
+    `Point a Datadog API client at ${baseUrl}. Every Datadog client builds its host as api.<site>, so the site here is dd.sandboxapis.dev and the paths are /api/v1/... and /api/v2/... exactly as on api.datadoghq.com. The TypeScript client (@datadog/datadog-api-client) takes DD_SITE=dd.sandboxapis.dev. The Python client (datadog-api-client) and the Go client reject a site outside Datadog's own list, so give them the whole host: Configuration(host="${baseUrl}") in Python, server index 1 with name set to the host part of ${baseUrl} in Go. Auth: DD-API-KEY and DD-APPLICATION-KEY with any value, or none. The incident API is x-unstable, so the Python client needs configuration.unstable_operations["list_incidents"] = True before it will call it. Datadog's own hosted MCP server cannot be pointed at this host. WHAT IS RENDERED: monitors over the data set's services, metric queries (avg/sum/min/max, p50 and p99 of trace.http.request, by {service}, .rollup(), .as_count(), .as_rate(), one binary operator), monitor events, one dashboard per service, downtimes from maintenance windows, incidents, on-call schedules and escalation policies, service definitions, users, teams, the three managed roles, API and application keys (never a key value), error tracking issues and error logs from the sampled error events. THE DATA ENDS AT 00:00 UTC TODAY: relative windows (now-1h) resolve against that instant, and the last 24 hours always overlap the data set. Check ${baseUrl.replace(/^https:\/\/[^/]+/, "https://sandboxapis.dev")}/providers/datadog for the row-by-row picture.`,
+  nextSteps: (baseUrl) => [
+    `Datadog: curl -H 'DD-API-KEY: anything' "${baseUrl}/api/v1/validate"`,
+    `Datadog: curl -H 'DD-API-KEY: anything' "${baseUrl}/api/v1/monitor"`,
+    `Datadog (the incident): curl -H 'DD-API-KEY: anything' "${baseUrl}/api/v2/incidents"`,
+  ],
+  notGitReason:
+    "Datadog is an observability provider. It has no repositories, commits or branches. A service here is a component on the git hosts, and an incident's link attachments point at the issue and the fix pull request served on gh.",
+  noIssuesReason:
+    "Datadog has no issue tracker in this data set: its incidents are the same incidents PagerDuty pages for, and the tracker issue filed for each one lives on jira./linear./gh.",
+  exampleCurl: (baseUrl) => `curl -H 'DD-API-KEY: anything' "${baseUrl}/api/v1/monitor"`,
+};
+
 // Order mirrors PROVIDER_IDS exactly — circleci before zendesk before gitlab,
-// salesforce, hubspot, buildkite and statuspage appended; see provider-ids.ts.
-export const MCP_PROVIDERS: readonly McpProviderDef[] = [github, slack, sentry, circleci, zendesk, gitlab, bitbucket, ado, jira, linear, anthropic, cursor, devin, openai, chatgpt, teams, pagerduty, salesforce, hubspot, buildkite, statuspage];
+const prometheus: McpProviderDef = {
+  id: "prometheus",
+  howTo: (baseUrl) =>
+    `Point a Prometheus client at ${baseUrl}, a base-URL swap. Paths are /api/v1/... exactly as on a Prometheus server: prometheus-api-client takes \`PrometheusConnect(url="${baseUrl}")\`, prometheus-query takes \`endpoint\`, promtool takes the server URL as its argument, and a Grafana Prometheus datasource takes it as its URL. Auth: any 'Authorization: Bearer' token, any Basic pair, or none. THE DATA ENDS AT 00:00 UTC TODAY on the live host: that instant is "now", so a query with no \`time\` is evaluated there and nothing after it exists. WHAT IS RENDERED: this data set's six services as metric series, one per canon series: http_request_duration_seconds{quantile="0.5"|"0.99"} (seconds), http_requests_total and http_request_errors_total (counters derived from the canon's request and error rates, starting at 0 on the window's first sample), service:http_request_errors:ratio (the error rate as a ratio) and process_cpu_utilization_ratio. Every series carries job, service, team and tier labels. The incident's spike is in service:http_request_errors:ratio at 300-second resolution inside its window; outside it the series are hourly, and the server's lookback is 2h, so use ranges of 2h or more for rate() there. GET /api/v1/rules lists one alerting rule per canon monitor (one group per team), /api/v1/alerts the alerts active at the anchor, and ALERTS / ALERTS_FOR_STATE carry every pending and firing interval, so ALERTS{alertstate="firing"} marks exactly when each canon alert fired and resolved. THE PROMQL SUBSET: selectors with =, !=, =~ and !~; range selectors; rate, increase, avg_over_time, min_over_time and max_over_time; sum, avg, min, max and count with by or without; arithmetic and comparison (with bool) against scalars; one-to-one arithmetic between vectors with identical labels. Anything else (offset, @, subqueries, topk, on(), histogram_quantile, ...) answers 400 bad_data naming the construct. WHAT IS NOT: scrape targets and pools (series arrive by remote write, so those lists are empty), exemplars, the search API (disabled, as on a server without the feature flag), runtime info and self metrics, and every write (refused: this universe is read-only). Live host only: no pinned snapshot exists for this provider yet. Check ${baseUrl.replace(/^https:\/\/[^/]+/, "https://sandboxapis.dev")}/providers/prometheus for the row-by-row picture.`,
+  nextSteps: (baseUrl) => [
+    `Prometheus: curl "${baseUrl}/api/v1/label/__name__/values"`,
+    `Prometheus (the alerting rules, one per monitor): curl "${baseUrl}/api/v1/rules"`,
+    `Prometheus (when each alert fired): curl -G "${baseUrl}/api/v1/query" --data-urlencode 'query=ALERTS_FOR_STATE'`,
+    `Prometheus (the cross-host walk): an alert's service label is the service sentry. and pd. serve the incident on, and the alert's fire time is the incident's open time there.`,
+  ],
+  notGitReason:
+    "Prometheus is a metrics server. It stores time series about the services, it does not host their code. The services it labels are deployed from the repositories gh./gl./bb./ado. serve.",
+  noIssuesReason:
+    "Prometheus has no issue tracker. The incident its alerts belong to is tracked on pd. and sentry., and its ticket on jira./linear./gh.",
+  exampleCurl: (baseUrl) => `curl -G "${baseUrl}/api/v1/query" --data-urlencode 'query=service:http_request_errors:ratio'`,
+};
+
+const grafana: McpProviderDef = {
+  id: "grafana",
+  howTo: (baseUrl) =>
+    `Point a Grafana client at ${baseUrl}, a base-URL swap. Paths are /api/... exactly as on a Grafana server: mcp-grafana takes \`GRAFANA_URL=${baseUrl}\` with any service-account token, grafana-client takes \`GrafanaApi.from_url("${baseUrl}")\`, and the Terraform provider takes it as \`url\`. Auth: any 'Authorization: Bearer' token, any Basic pair, or none; you are the data set's founding member, a Grafana server admin. THE DATA ENDS AT 00:00 UTC TODAY on the live host: that instant is "now", so a time range like now-6h to now is the data set's last six hours. WHAT IS RENDERED: this host emulates Grafana OSS 13.2.4. One folder per team (uid team-<team slug>), one dashboard per service (uid svc-<service slug>) with a timeseries panel per metric series, and one Prometheus datasource (uid prometheus) that IS the Prometheus host: /api/datasources/uid/prometheus/resources/api/v1/... and /api/datasources/proxy/uid/prometheus/api/v1/... answer exactly what prom.sandboxapis.dev answers, and POST /api/ds/query returns the same series as data frames. One Grafana-managed alert rule per canon monitor (one group per service, in its team's folder), linked to the panel of the series it watches: /api/prometheus/grafana/api/v1/rules, /api/v1/provisioning/alert-rules, the ruler API and the YAML export all list them, /api/v1/rules/history and /api/annotations carry every state change at the canon fire and resolve times, and the incident is an annotation region on its service's dashboard. The members are the users (organization roles from the data set's membership roles), the teams are the teams, and the organization's one group token is the token of its one service account (metadata only, never a key). WHAT IS NOT: Enterprise-only APIs (role-based access control, reporting, licensing, SAML, recording rules, team sync) answer OSS's own 404; LDAP and quotas are off; there are no public dashboards, snapshots, playlists, library elements, silences or contact points; no Loki datasource, no IRM incidents or OnCall; the app-platform APIs under /apis answer 404 (mcp-grafana then uses the /api paths); every write is refused (this universe is read-only). Live host only: no pinned snapshot exists for this provider yet. Check ${baseUrl.replace(/^https:\/\/[^/]+/, "https://sandboxapis.dev")}/providers/grafana for the row-by-row picture.`,
+  nextSteps: (baseUrl) => [
+    `Grafana (the dashboards, one per service): curl "${baseUrl}/api/search?type=dash-db"`,
+    `Grafana (the alert rules, one per monitor): curl "${baseUrl}/api/prometheus/grafana/api/v1/rules"`,
+    `Grafana (a query through the datasource): curl -X POST "${baseUrl}/api/ds/query" -H 'Content-Type: application/json' -d '{"queries":[{"refId":"A","datasource":{"uid":"prometheus"},"expr":"service:http_request_errors:ratio"}],"from":"now-6h","to":"now"}'`,
+    `Grafana (the cross-host walk): a rule's alert annotations fire at the instant the incident opens on pd. and sentry., on the service the rule's service label names.`,
+  ],
+  notGitReason:
+    "Grafana is a dashboard and alerting server. It charts the services' metrics, it does not host their code. The services it charts are deployed from the repositories gh./gl./bb./ado. serve.",
+  noIssuesReason:
+    "Grafana has no issue tracker. The incident its alerts belong to is tracked on pd. and sentry., and its ticket on jira./linear./gh.",
+  exampleCurl: (baseUrl) => `curl "${baseUrl}/api/search?type=dash-db"`,
+};
+
+// salesforce, hubspot, buildkite, statuspage, antigravity, prometheus, grafana and datadog appended; see provider-ids.ts.
+export const MCP_PROVIDERS: readonly McpProviderDef[] = [github, slack, sentry, circleci, zendesk, gitlab, bitbucket, ado, jira, linear, anthropic, cursor, devin, openai, chatgpt, teams, pagerduty, salesforce, hubspot, buildkite, statuspage, antigravity, prometheus, grafana, datadog];
 
 export const mcpProviderById: Record<Provider, McpProviderDef> = Object.fromEntries(
   MCP_PROVIDERS.map((d) => [d.id, d]),

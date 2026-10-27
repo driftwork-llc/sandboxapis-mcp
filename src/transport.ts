@@ -146,7 +146,7 @@ function unreachable(baseUrl: string, err: unknown): RestResult {
     ok: false,
     body: {
       error: `Could not reach ${baseUrl}: ${detail}`,
-      hint: "SandboxAPIs is a hosted service — this MCP server needs network access to it. Check connectivity, or set SANDBOXAPIS_BASE_URL_* to point at a local instance.",
+      hint: "SandboxAPIs is a hosted service, so this MCP server needs network access to it. Check connectivity, or set SANDBOXAPIS_BASE_URL_* to point at a local instance.",
     },
   };
 }

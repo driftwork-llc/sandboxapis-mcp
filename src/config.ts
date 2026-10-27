@@ -38,7 +38,10 @@ export interface SnapshotPin {
    *  LICENSE blob. It closed the post-cutover gap the same day it opened,
    *  exactly as generation 10 closed hello-15's.
    *
-   *  Generation 12 (hello-20) is the NEWEST, and the one the LIVE hosts roll.
+   *  Generation 12 (hello-20) is the NEWEST, and the one the LIVE hosts rolled
+   *  from 2026-09-14 until the 2026-10-22 hello-21 cutover; live has been
+   *  ahead of it since (hello-22 from the 2026-10-24 cutover), and no
+   *  generation 13 is minted.
    *  It skips four template versions rather than one, because four cutovers ran
    *  while no generation was being minted, and it carries all four: hello-17's
    *  caller credentials, epic notes, team-principal grants, CODEOWNERS and
@@ -164,6 +167,25 @@ export const DEFAULT_CONFIG: McpConfig = {
     // Note the API's own paths carry the `/v1` prefix, so callers point at this
     // host and keep writing `/v1/pages/...` exactly as they do today.
     statuspage: { baseUrl: "https://statuspage.sandboxapis.dev" },
+    // antigravity. is the provider id with no abbreviation. Both SDKs take a
+    // whole base URL (`httpOptions.baseUrl` in @google/genai, `http_options`
+    // `base_url` in google-genai, or GOOGLE_GEMINI_BASE_URL), and the API's
+    // own paths carry `/v1beta`, so callers keep writing `/v1beta/triggers`.
+    // LIVE ONLY: no snapshot pin is registered for this provider yet.
+    antigravity: { baseUrl: "https://antigravity.sandboxapis.dev" },
+    // prom. is the short name. Every Prometheus client takes a whole server URL
+    // and appends /api/v1/... itself. LIVE ONLY: no snapshot pin is registered.
+    prometheus: { baseUrl: "https://prom.sandboxapis.dev" },
+    // Every Grafana client takes the server URL and appends /api/... itself
+    // (GRAFANA_URL for mcp-grafana). LIVE ONLY: no snapshot pin is registered.
+    grafana: { baseUrl: "https://grafana.sandboxapis.dev" },
+    // api.dd., two labels under the apex, because every Datadog client builds
+    // its host as `api.<site>`: the site is `dd.sandboxapis.dev`. The Python
+    // and Go clients reject a site outside Datadog's own list, so they take
+    // this whole URL instead (`Configuration(host=...)`, server index 1 with
+    // `name`); the TypeScript client takes `DD_SITE=dd.sandboxapis.dev`.
+    // LIVE ONLY: no snapshot pin is registered for this provider.
+    datadog: { baseUrl: "https://api.dd.sandboxapis.dev" },
   },
   snapshotHostTemplate: "https://{pin}.snap.sandboxapis.dev",
   // MIRRORS defaultSnapshots() in packages/compiler/src/snapshot.ts — the
@@ -576,10 +598,10 @@ export const DEFAULT_CONFIG: McpConfig = {
     // way when its own "newest AND live" sentence went stale in three days.
     //
     //   FIRST: generation 12 is the NEWEST REGISTERED generation.
-    //   SECOND: hello-20 is ALSO what the LIVE hosts roll, as of the 2026-09-14
-    //   cutover.
+    //   SECOND: hello-20 WAS ALSO what the LIVE hosts rolled, from the
+    //   2026-09-14 cutover until the 2026-10-22 hello-21 one.
     //
-    // The second fact will stop holding at the next cutover WITHOUT the first
+    // The second fact stopped holding at the hello-21 cutover WITHOUT the first
     // changing, exactly as it did on 2026-09-12. When it does, the honest
     // reading is the one this file has had to write four times: the newest pin
     // and live are different universes, and a caller who needs reproducibility

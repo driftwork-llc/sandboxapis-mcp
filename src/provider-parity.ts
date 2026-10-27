@@ -78,6 +78,12 @@ const CI_LOG = "parity/ci-log-parity.test.ts";
  *  canon of its own, and the two vocabularies (post/post_update/page-service vs
  *  incident/incident_update/component) are pure translation. */
 const STATUS_PAGE = "parity/status-page-parity.test.ts";
+/** The agent-run suite (the antigravity provider, 2026-10-22): every
+ *  Antigravity interaction that names a pull request is walked to the git host
+ *  and the tracker, the vendor partition is asserted against the other agent
+ *  hosts, a trigger's time zone against the owner's chat profile, and an
+ *  environment's file listing against the git tree at the run's commit. */
+const AGENT_RUN = "parity/agent-run-parity.test.ts";
 /**
  * The CRM-TO-CRM walk (2026-09-05), which replaced the prep FENCE
  * `parity/crm-prep-parity.test.ts` when the last of the three CRM hosts began
@@ -112,13 +118,19 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
   github: [
     {
       statement:
+        "The issue and the fix pull request a Datadog incident attaches as links are the ones this host serves at those numbers with those titles, and the Datadog DORA failure for the incident names the fix pull request's merge commit SHA",
+      partners: ["datadog"],
+      guardedBy: INCIDENT,
+    },
+    {
+      statement:
         "Every pull request in the repository has ONE head-branch name: this host's `head.ref` and GraphQL `headRefName`, GitLab's `source_branch` and `sourceBranch`, Bitbucket's `source.branch.name` and Azure DevOps' `refs/heads/…` `sourceRefName` all print the same string, and that string resolves as a real branch",
       partners: ["gitlab", "bitbucket", "ado"],
       guardedBy: BRANCH,
     },
     {
       statement:
-        "The engineer a Salesforce Case was escalated to is a member of this organization and fetchable as a user here — the one place this org's go-to-market cast and its engineering roster share a human, which is why the CRM host reports the FACT of an escalation and never invents a custom field naming the person",
+        "The engineer a Salesforce Case was escalated to is a member of this organization and fetchable as a user here: the one place this org's go-to-market cast and its engineering roster share a human, which is why the CRM host reports the FACT of an escalation and never invents a custom field naming the person",
       partners: ["salesforce"],
       guardedBy: CRM_WALK,
     },
@@ -154,7 +166,7 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
     },
     {
       statement:
-        "One incident walked over four hosts — the Slack thread, the Jira and Linear issue, the pull request here and the GitLab merge request — carries the same issue key, the same branch name and the same 40-character head SHA, on the live hosts and on the frozen `-g6` pins",
+        "One incident walked over four hosts (the Slack thread, the Jira and Linear issue, the pull request here and the GitLab merge request) carries the same issue key, the same branch name and the same 40-character head SHA, on the live hosts and on the frozen `-g6` pins",
       partners: ["slack", "jira", "linear", "gitlab"],
       guardedBy: FOUR_HOP,
     },
@@ -163,6 +175,12 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
         "The Actions run on a commit is the same build CircleCI reports for that commit: the same head SHA, the same job names with the same pass/fail verdicts, the same head branch, and an `actor.login` equal to the user CircleCI's workflow names as `started_by`",
       partners: ["circleci"],
       guardedBy: CI,
+    },
+    {
+      statement:
+        "Every pull request a Google Antigravity interaction names in its labels is a pull request this host serves in the same repository, with the same number, the same head SHA and the same author, and the files that run's environment lists at its commit are this host's tree at that SHA",
+      partners: ["antigravity"],
+      guardedBy: AGENT_RUN,
     },
   ],
 
@@ -187,7 +205,7 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
     },
     {
       statement:
-        "The merge request at the end of the four-hop walk carries the same `source_branch` and the same 40-character `sha` the GitHub pull request served, for a story that started as a Slack thread and a Jira/Linear issue — on the live hosts and on the frozen `-g6` pins",
+        "The merge request at the end of the four-hop walk carries the same `source_branch` and the same 40-character `sha` the GitHub pull request served, for a story that started as a Slack thread and a Jira/Linear issue, on the live hosts and on the frozen `-g6` pins",
       partners: ["slack", "jira", "linear", "github"],
       guardedBy: FOUR_HOP,
     },
@@ -214,7 +232,7 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
     },
     {
       statement:
-        "A pipeline here and a Buildkite build are the same CI run — the same build number at the same commit SHA — and the step's log is BYTE-IDENTICAL to the job log Buildkite serves for it, because neither host builds the text",
+        "A pipeline here and a Buildkite build are the same CI run (the same build number at the same commit SHA), and the step's log is BYTE-IDENTICAL to the job log Buildkite serves for it, because neither host builds the text",
       partners: ["buildkite"],
       guardedBy: CI_LOG,
     },
@@ -256,9 +274,15 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
     },
     {
       statement:
-        "The issue at hop 2 of the four-hop walk carries the key and summary the Slack thread opened about, the estimate and status Linear serves, and resolution instants that bracket the GitHub pull request's merge — on the live hosts and on the frozen `-g6` pins",
+        "The issue at hop 2 of the four-hop walk carries the key and summary the Slack thread opened about, the estimate and status Linear serves, and resolution instants that bracket the GitHub pull request's merge, on the live hosts and on the frozen `-g6` pins",
       partners: ["slack", "linear", "github", "gitlab"],
       guardedBy: FOUR_HOP,
+    },
+    {
+      statement:
+        "The issue key a Google Antigravity interaction names in its labels resolves on this host as the issue that pull request closed",
+      partners: ["antigravity"],
+      guardedBy: AGENT_RUN,
     },
   ],
 
@@ -283,13 +307,13 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
     },
     {
       statement:
-        "`organization.createdAt` — and every team's `createdAt` — is the same instant GitHub's `/orgs/{org}`, GitLab's group and the Zendesk account's locale records return",
+        "`organization.createdAt`, and every team's `createdAt`, is the same instant GitHub's `/orgs/{org}`, GitLab's group and the Zendesk account's locale records return",
       partners: ["github", "gitlab", "zendesk"],
       guardedBy: ORG_MEMBER,
     },
     {
       statement:
-        "The issue at hop 2 of the four-hop walk carries the same identifier, title, estimate and state Jira serves, and the `branchName` at hop 3 is the head branch of the GitHub pull request and the GitLab merge request — on the live hosts and on the frozen `-g6` pins",
+        "The issue at hop 2 of the four-hop walk carries the same identifier, title, estimate and state Jira serves, and the `branchName` at hop 3 is the head branch of the GitHub pull request and the GitLab merge request, on the live hosts and on the frozen `-g6` pins",
       partners: ["slack", "jira", "github", "gitlab"],
       guardedBy: FOUR_HOP,
     },
@@ -298,7 +322,7 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
   slack: [
     {
       statement:
-        "Every message body, every whole-second timestamp, the whole top-level/reply partition, the per-message reaction sets and the user directory are the same on this host and on Microsoft Graph — each dialect's own documented ordering normalised away first, and the residue asserted identical over full cursor walks, not samples. The channel roster served here is the canonical roster exactly; the Graph team holding that channel contains every one of them",
+        "Every message body, every whole-second timestamp, the whole top-level/reply partition, the per-message reaction sets and the user directory are the same on this host and on Microsoft Graph, each dialect's own documented ordering normalised away first, and the residue asserted identical over full cursor walks, not samples. The channel roster served here is the canonical roster exactly; the Graph team holding that channel contains every one of them",
       partners: ["teams"],
       guardedBy: MESSAGING,
     },
@@ -310,16 +334,22 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
     },
     {
       statement:
-        "Hop 1 of the four-hop walk: the incidents channel, its thread opener and every reply are served here, and the burst's timestamps ascend and fall between the Jira issue's creation and its resolution — the same window the GitHub merge lands in",
+        "Hop 1 of the four-hop walk: the incidents channel, its thread opener and every reply are served here, and the burst's timestamps ascend and fall between the Jira issue's creation and its resolution, the same window the GitHub merge lands in",
       partners: ["jira", "linear", "github", "gitlab"],
       guardedBy: FOUR_HOP,
+    },
+    {
+      statement:
+        "A Google Antigravity trigger's `time_zone` is the IANA zone this host's user profile gives the person who owns that trigger",
+      partners: ["antigravity"],
+      guardedBy: AGENT_RUN,
     },
   ],
 
   teams: [
     {
       statement:
-        "Every `body.content`, every `createdDateTime` second, the whole chain/reply partition, the per-message reaction sets and the user directory are the same on this host and on Slack — each dialect's own documented ordering normalised away first, and the residue asserted identical over full `@odata.nextLink` walks, not samples. A team's `/members` contains every member of the Slack channel roster, and any extra holds no channel membership anywhere",
+        "Every `body.content`, every `createdDateTime` second, the whole chain/reply partition, the per-message reaction sets and the user directory are the same on this host and on Slack, each dialect's own documented ordering normalised away first, and the residue asserted identical over full `@odata.nextLink` walks, not samples. A team's `/members` contains every member of the Slack channel roster, and any extra holds no channel membership anywhere",
       partners: ["slack"],
       guardedBy: MESSAGING,
     },
@@ -328,7 +358,7 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
   anthropic: [
     {
       statement:
-        "This vendor's seat cohort is disjoint from the GitHub Copilot cohort and from Cursor's, Devin's and OpenAI's — nobody holds two vendors' seats — it equals its own slice of the canonical seat table, and the token totals summed across the paged usage report equal that slice's totals",
+        "This vendor's seat cohort is disjoint from the GitHub Copilot cohort and from Cursor's, Devin's and OpenAI's, so nobody holds two vendors' seats; it equals its own slice of the canonical seat table, and the token totals summed across the paged usage report equal that slice's totals",
       partners: ["github", "cursor", "devin", "openai"],
       guardedBy: M3,
     },
@@ -342,7 +372,7 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
   cursor: [
     {
       statement:
-        "This vendor's team roster is disjoint from the GitHub Copilot cohort and from Anthropic's, Devin's and OpenAI's — nobody holds two vendors' seats — it equals its own slice of the canonical seat table, and the token totals summed across the paged event stream equal that slice's totals",
+        "This vendor's team roster is disjoint from the GitHub Copilot cohort and from Anthropic's, Devin's and OpenAI's, so nobody holds two vendors' seats; it equals its own slice of the canonical seat table, and the token totals summed across the paged event stream equal that slice's totals",
       partners: ["github", "anthropic", "devin", "openai"],
       guardedBy: M3,
     },
@@ -352,12 +382,18 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
       partners: ["github"],
       guardedBy: M3,
     },
+    {
+      statement:
+        "No cloud agent this host serves is a Google Antigravity run: the two hosts partition the canonical agent-session table, and no pull request is claimed by both",
+      partners: ["antigravity"],
+      guardedBy: AGENT_RUN,
+    },
   ],
 
   devin: [
     {
       statement:
-        "This vendor's user roster is disjoint from the GitHub Copilot cohort and from Anthropic's, Cursor's and OpenAI's — nobody holds two vendors' seats — and equals its own slice of the canonical seat table",
+        "This vendor's user roster is disjoint from the GitHub Copilot cohort and from Anthropic's, Cursor's and OpenAI's, so nobody holds two vendors' seats; and it equals its own slice of the canonical seat table",
       partners: ["github", "anthropic", "cursor", "openai"],
       guardedBy: M3,
     },
@@ -366,6 +402,12 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
         "Every identity this host bills for resolves as a user on the GitHub host with the same name, and the session count here plus Cursor's agents plus GitHub's own agent tasks sum to the whole canonical agent-session table",
       partners: ["github", "cursor"],
       guardedBy: M3,
+    },
+    {
+      statement:
+        "No session this host serves is a Google Antigravity run: the two hosts partition the canonical agent-session table, and no pull request is claimed by both",
+      partners: ["antigravity"],
+      guardedBy: AGENT_RUN,
     },
   ],
 
@@ -378,7 +420,7 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
     },
     {
       statement:
-        "This vendor's user roster is disjoint from the GitHub Copilot cohort and from Anthropic's, Cursor's and Devin's — nobody holds two vendors' seats — and the token totals summed across the paged usage endpoint equal its own slice of the canonical seat table",
+        "This vendor's user roster is disjoint from the GitHub Copilot cohort and from Anthropic's, Cursor's and Devin's, so nobody holds two vendors' seats; and the token totals summed across the paged usage endpoint equal its own slice of the canonical seat table",
       partners: ["github", "anthropic", "cursor", "devin"],
       guardedBy: M3,
     },
@@ -392,7 +434,7 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
   chatgpt: [
     {
       statement:
-        "This surface and the OpenAI platform surface serve ONE cohort — one vendor, one set of seats: every usage row's `actor.user_id` is an id `/v1/organization/users` returns, `actor.email` matches that user's email, and the uncached-input and output token totals of the two hosts are equal",
+        "This surface and the OpenAI platform surface serve ONE cohort: one vendor, one set of seats: every usage row's `actor.user_id` is an id `/v1/organization/users` returns, `actor.email` matches that user's email, and the uncached-input and output token totals of the two hosts are equal",
       partners: ["openai"],
       guardedBy: M3,
     },
@@ -406,7 +448,13 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
   sentry: [
     {
       statement:
-        "The sha an error group's stack frames resolve against is a commit the GitHub host serves, and the source lines shipped in each frame's `context` are the bytes GitHub returns for that file at that sha — same path, same line numbers, same text",
+        "The project the incident's error group sits on is the service the Prometheus host labels the incident's alert with, and that alert fires at the instant the incident opens",
+      partners: ["prometheus"],
+      guardedBy: INCIDENT,
+    },
+    {
+      statement:
+        "The sha an error group's stack frames resolve against is a commit the GitHub host serves, and the source lines shipped in each frame's `context` are the bytes GitHub returns for that file at that sha: same path, same line numbers, same text",
       partners: ["github"],
       guardedBy: INCIDENT,
     },
@@ -422,12 +470,18 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
       partners: ["pagerduty"],
       guardedBy: INCIDENT,
     },
+    {
+      statement:
+        "The error group behind the incident is the Datadog error-tracking issue for the same service with the same type and message, its sampled events are Datadog's error logs, and Datadog's error-count series peaks inside the window this host gives as first and last seen",
+      partners: ["datadog"],
+      guardedBy: INCIDENT,
+    },
   ],
 
   zendesk: [
     {
       statement:
-        "The support account's own creation instant — the `created_at` on every locale this host serves — is the same instant GitHub's `/orgs/{org}`, GitLab's `/groups/{id}` and Linear's `Organization.createdAt` print, to the second",
+        "The support account's own creation instant (the `created_at` on every locale this host serves) is the same instant GitHub's `/orgs/{org}`, GitLab's `/groups/{id}` and Linear's `Organization.createdAt` print, to the second",
       partners: ["github", "gitlab", "linear"],
       guardedBy: ORG_MEMBER,
     },
@@ -439,7 +493,7 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
     },
     {
       statement:
-        "This host's organization deliberately carries no industry, revenue, headcount, address or owner and no opportunity object at all — the commercial fields Salesforce and HubSpot serve are absent here rather than invented into `organization_fields`, and a caller who goes looking for a deals endpoint gets a coverage refusal instead of a plausible empty collection",
+        "This host's organization deliberately carries no industry, revenue, headcount, address or owner and no opportunity object at all. The commercial fields Salesforce and HubSpot serve are absent here rather than invented into `organization_fields`, and a caller who goes looking for a deals endpoint gets a coverage refusal instead of a plausible empty collection",
       partners: ["salesforce", "hubspot"],
       guardedBy: CRM_CRM,
     },
@@ -469,13 +523,13 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
   buildkite: [
     {
       statement:
-        "A build here is the same CI run Bitbucket serves as a pipeline and Azure DevOps serves as a build: the same build number, and the same 40-character `commit` SHA — which is a commit the git hosts really have",
+        "A build here is the same CI run Bitbucket serves as a pipeline and Azure DevOps serves as a build: the same build number, and the same 40-character `commit` SHA, which is a commit the git hosts really have",
       partners: ["bitbucket", "ado"],
       guardedBy: CI_LOG,
     },
     {
       statement:
-        "A job's log output is BYTE-IDENTICAL to the same job's step log on Bitbucket — neither host builds the text, both serve the bytes the canon baked — and the `git checkout` line inside it names a commit that really exists at that SHA",
+        "A job's log output is BYTE-IDENTICAL to the same job's step log on Bitbucket (neither host builds the text, both serve the bytes the canon baked), and the `git checkout` line inside it names a commit that really exists at that SHA",
       partners: ["bitbucket"],
       guardedBy: CI_LOG,
     },
@@ -486,6 +540,18 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
       statement:
         "The incident here and the Sentry issue name the same person and the same service; the trigger log entry is at or before Sentry's `lastSeen` for the error group, and the resolve entry is after the commit that fixed it",
       partners: ["sentry"],
+      guardedBy: INCIDENT,
+    },
+    {
+      statement:
+        "An incident here opens at the instant the Prometheus host starts reporting its opening alert as firing (ALERTS{alertstate=\"firing\"}), on the service that alert is labelled with",
+      partners: ["prometheus"],
+      guardedBy: INCIDENT,
+    },
+    {
+      statement:
+        "An incident here opens at the instant the Grafana host writes its opening rule's Alerting annotation, on the service that rule's service label names, and the incident is an annotation region on that service's Grafana dashboard",
+      partners: ["grafana"],
       guardedBy: INCIDENT,
     },
     {
@@ -501,7 +567,13 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
     },
     {
       statement:
-        "A status-page post here and the Statuspage incident for it are one publication in two dialects: the same title, the same number of updates at the same instants with the same text, and the same affected services — a post_update's impacted page-service is the same business service as the incident_update's affected component",
+        "The incident here is the incident Datadog serves: the same title, Datadog's `declared` at this incident's `created_at`, the same commander, and the Datadog monitor event that triggered it at the instant the alert fired",
+      partners: ["datadog"],
+      guardedBy: INCIDENT,
+    },
+    {
+      statement:
+        "A status-page post here and the Statuspage incident for it are one publication in two dialects: the same title, the same number of updates at the same instants with the same text, and the same affected services: a post_update's impacted page-service is the same business service as the incident_update's affected component",
       partners: ["statuspage"],
       guardedBy: STATUS_PAGE,
     },
@@ -519,13 +591,13 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
     },
     {
       statement:
-        "An escalated Case's engineer is a member of the same organization the git host serves — the one place this org's go-to-market cast and its engineering roster share a human, and the reason no `EscalatedTo__c` custom field was invented to advertise it",
+        "An escalated Case's engineer is a member of the same organization the git host serves: the one place this org's go-to-market cast and its engineering roster share a human, and the reason no `EscalatedTo__c` custom field was invented to advertise it",
       partners: ["github"],
       guardedBy: CRM_WALK,
     },
     {
       statement:
-        "One account found here by SOQL on `Website`, on HubSpot by a `domain` search and on Zendesk by name is ONE company: the same `Name`, the same description, the same postal address, the same created and last-modified instant to the second, the same set of contact email addresses and the same tickets — with `NumberOfEmployees` and `AnnualRevenue` equal to HubSpot's string-valued properties and canon's ticket states collapsed onto this host's standard four-value `Case.Status` rather than a widened picklist",
+        "One account found here by SOQL on `Website`, on HubSpot by a `domain` search and on Zendesk by name is ONE company: the same `Name`, the same description, the same postal address, the same created and last-modified instant to the second, the same set of contact email addresses and the same tickets, with `NumberOfEmployees` and `AnnualRevenue` equal to HubSpot's string-valued properties and canon's ticket states collapsed onto this host's standard four-value `Case.Status` rather than a widened picklist",
       partners: ["hubspot", "zendesk"],
       guardedBy: CRM_CRM,
     },
@@ -545,13 +617,13 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
     },
     {
       statement:
-        "Every ticket associated to that company here is a Salesforce Case and a Zendesk ticket with the same subject, the same customer message and the same arrival instant, and this host's `hs_pipeline_stage` is canon's finer state — the one Zendesk serves — rather than Salesforce's four-value collapse of it",
+        "Every ticket associated to that company here is a Salesforce Case and a Zendesk ticket with the same subject, the same customer message and the same arrival instant, and this host's `hs_pipeline_stage` is canon's finer state (the one Zendesk serves) rather than Salesforce's four-value collapse of it",
       partners: ["salesforce", "zendesk"],
       guardedBy: CRM_CRM,
     },
     {
       statement:
-        "A write is refused by this host's read-only boundary in HubSpot's own Error envelope and by Salesforce's in its array envelope — never by either host's coverage 404, which would say the endpoint does not exist rather than that the universe does not accept writes — and on the pre-CRM generation both refuse a CRM read with a coverage-pointing 404 rather than an empty collection",
+        "A write is refused by this host's read-only boundary in HubSpot's own Error envelope and by Salesforce's in its array envelope, never by either host's coverage 404, which would say the endpoint does not exist rather than that the universe does not accept writes, and on the pre-CRM generation both refuse a CRM read with a coverage-pointing 404 rather than an empty collection",
       partners: ["salesforce"],
       guardedBy: CRM_CRM,
     },
@@ -560,13 +632,13 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
   statuspage: [
     {
       statement:
-        "An incident here is the same publication PagerDuty serves as a status-page post: the same title, the same updates in the same order at the same instants with the same text, the same postmortem, and the same affected services — an `incident_update.affected_components` entry and a `post_update.impacted` entry name one business service, and the two hosts' impact vocabularies (`major_outage` / `full-outage`) are two spellings of one canonical level",
+        "An incident here is the same publication PagerDuty serves as a status-page post: the same title, the same updates in the same order at the same instants with the same text, the same postmortem, and the same affected services: an `incident_update.affected_components` entry and a `post_update.impacted` entry name one business service, and the two hosts' impact vocabularies (`major_outage` / `full-outage`) are two spellings of one canonical level",
       partners: ["pagerduty"],
       guardedBy: STATUS_PAGE,
     },
     {
       statement:
-        "The outage a page told customers about is the one responders were paged for: every incident post here resolves to a canonical incident PagerDuty serves, and the page never announced an outage before that incident opened — so the customer-facing story and the responder-facing one are the same event, not two",
+        "The outage a page told customers about is the one responders were paged for: every incident post here resolves to a canonical incident PagerDuty serves, and the page never announced an outage before that incident opened, so the customer-facing story and the responder-facing one are the same event, not two",
       // Sentry is deliberately NOT named. The claim would be true of it too, but
       // `status-page-parity.test.ts` drives only the PagerDuty and Statuspage
       // renderers, and a claim may only name a provider the suite guarding it
@@ -574,6 +646,84 @@ export const PROVIDER_PARITY: Record<Provider, ParityClaim[]> = {
       // for narrative reach would be a promise no test keeps.
       partners: ["pagerduty"],
       guardedBy: STATUS_PAGE,
+    },
+  ],
+
+  prometheus: [
+    {
+      statement:
+        "The spike in a service's error ratio is the canon's error-rate series sample for sample; ALERTS{alertstate=\"firing\"} is 1 exactly from the canon fire time until the alert resolves, and the alert's activeAt is that fire time minus the monitor's for_sec",
+      partners: ["pagerduty", "sentry"],
+      guardedBy: INCIDENT,
+    },
+    {
+      statement:
+        "The service an alert is labelled with is the project the Sentry host serves the incident's error group on and the service PagerDuty paged for, and the incident opens at the alert's fire time on both",
+      partners: ["sentry", "pagerduty"],
+      guardedBy: INCIDENT,
+    },
+    {
+      statement:
+        "Grafana's Prometheus datasource is this host: its resource API and its data frames answer the same series with the same values, and its alert rules watch the series this host's alerting rules watch",
+      partners: ["grafana"],
+      guardedBy: INCIDENT,
+    },
+  ],
+
+  grafana: [
+    {
+      statement:
+        "The dashboard for the incident's service charts the Prometheus host's own series through its datasource, sample for sample, and the alert rule watching that series is linked to the panel that charts it",
+      partners: ["prometheus"],
+      guardedBy: INCIDENT,
+    },
+    {
+      statement:
+        "A rule's Alerting annotation is written at the canon fire time, which is the instant the incident opens on PagerDuty and the instant Prometheus starts reporting the alert as firing, on the service the rule's service label names",
+      partners: ["pagerduty", "prometheus"],
+      guardedBy: INCIDENT,
+    },
+  ],
+
+  datadog: [
+    {
+      statement:
+        "The monitor over the incident's series fired at the instant PagerDuty's incident opened: its triggered event's `date_happened` is the canon alert's fire time, the incident's `declared` is PagerDuty's `created_at`, and the incident commander is the same person on both hosts",
+      partners: ["pagerduty"],
+      guardedBy: INCIDENT,
+    },
+    {
+      statement:
+        "A metrics query over the incident window returns the spike: the error-count series for the incident's service peaks inside the window in which Sentry's error group was first and last seen, and the error logs here are that group's own sampled events",
+      partners: ["sentry"],
+      guardedBy: INCIDENT,
+    },
+    {
+      statement:
+        "The incident's link attachments are the GitHub issue and the fix pull request the git host serves, at the same numbers and titles, and its DORA failure names the fix pull request's merge commit SHA",
+      partners: ["github"],
+      guardedBy: INCIDENT,
+    },
+  ],
+
+  antigravity: [
+    {
+      statement:
+        "Every interaction that names a pull request in its labels names one the GitHub host serves with the same number, head SHA and author, and an issue key Jira resolves as the issue that pull request closed",
+      partners: ["github", "jira"],
+      guardedBy: AGENT_RUN,
+    },
+    {
+      statement:
+        "No Antigravity run appears among Devin's sessions or Cursor's cloud agents, and no pull request is claimed by two agent vendors",
+      partners: ["devin", "cursor"],
+      guardedBy: AGENT_RUN,
+    },
+    {
+      statement:
+        "A trigger's `time_zone` is the IANA zone Slack's user profile gives the trigger's owner, and an environment's file listing is the GitHub tree at the commit the run worked on",
+      partners: ["slack", "github"],
+      guardedBy: AGENT_RUN,
     },
   ],
 };

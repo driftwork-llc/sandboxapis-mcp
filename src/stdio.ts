@@ -30,8 +30,8 @@ async function main(): Promise<void> {
   // stdout is the JSON-RPC channel — log only to stderr.
   console.error(
     `[sandboxapis-mcp] ready on stdio${
-      apiKey ? " (keyed)" : " (anonymous — 60 req/hr; set SANDBOXAPIS_API_KEY to lift)"
-    } — call the \`orient\` tool first.`,
+      apiKey ? " (keyed)" : " (anonymous, 60 req/hr; set SANDBOXAPIS_API_KEY to lift)"
+    }. Call the \`orient\` tool first.`,
   );
 }
 

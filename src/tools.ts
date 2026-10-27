@@ -508,10 +508,10 @@ export function registerTools(server: McpServer, u: McpUniverse): void {
         ...(others.length
           ? {
               otherGenerations: others.map((p) => ({ pin: p.pin, baseUrl: snapshotBaseUrl(cfg, p.pin), generation: p.generation, apiVersion: p.apiVersion, files: p.files })),
-              note: "Generations are DIFFERENT universes (issue keys and SHAs differ), not the same data with more endpoints — pick one and stay on it.",
+              note: "Generations are DIFFERENT universes (issue keys and SHAs differ), not the same data with more endpoints. Pick one and stay on it.",
             }
           : {}),
-        howToPin: `Point your ${provider} client's base URL at ${baseUrl} instead of the live host. Every request returns the identical pinned universe — safe for CI assertions.`,
+        howToPin: `Point your ${provider} client's base URL at ${baseUrl} instead of the live host. Every request returns the identical pinned universe, so it is safe for CI assertions.`,
         example: mcpProviderById[provider].exampleCurl(baseUrl, cfg.orgLogin, cfg.flagshipRepo),
       });
     },

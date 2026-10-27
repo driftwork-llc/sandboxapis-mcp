@@ -20,7 +20,13 @@
 // and its analysis is the one where the claim was NARROWED rather than taken:
 // its API lives under "/v1/", which is the service host's own prefix, so it
 // claims "/v1/pages" and deliberately leaves "/v1/organizations" to anthropic.
-export const PROVIDER_IDS = ["github", "slack", "sentry", "circleci", "zendesk", "gitlab", "bitbucket", "ado", "jira", "linear", "anthropic", "cursor", "devin", "openai", "chatgpt", "teams", "pagerduty", "salesforce", "hubspot", "buildkite", "statuspage"] as const;
+// antigravity is appended last: its whole API sits under "/v1beta/" (plus the
+// "/upload/v1beta/" refusal prefix), which no other def claims. prometheus
+// follows it and claims no dev-split prefix at all ("/api/v1/" is GitLab's), and
+// grafana follows that, claiming none either ("/api/" is GitLab's too), and
+// datadog follows grafana and claims no dev-split prefix at all (its /api/v1
+// and /api/v2 paths collide with gitlab, zendesk and prometheus).
+export const PROVIDER_IDS = ["github", "slack", "sentry", "circleci", "zendesk", "gitlab", "bitbucket", "ado", "jira", "linear", "anthropic", "cursor", "devin", "openai", "chatgpt", "teams", "pagerduty", "salesforce", "hubspot", "buildkite", "statuspage", "antigravity", "prometheus", "grafana", "datadog"] as const;
 
 export type Provider = (typeof PROVIDER_IDS)[number];
 

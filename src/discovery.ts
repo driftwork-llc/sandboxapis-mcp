@@ -105,7 +105,7 @@ export async function buildOrientation(u: McpUniverse): Promise<Orientation> {
   return {
     // Generic by design — the providers[] list right below is the factual
     // enumeration, so this line never goes stale on a provider launch.
-    service: "SandboxAPIs — read-only, API-compatible replicas of the developer tools you already use, all pre-loaded with the same simulated data set.",
+    service: "SandboxAPIs: read-only, API-compatible replicas of the developer tools you already use, all pre-loaded with the same simulated data set.",
     readOnly: "Every universe is READ-ONLY. Mutations (writes, GraphQL mutations) return the provider's error shape with a friendly message.",
     access: toAccess(budget),
     universe: { name: cfg.universe, theme: cfg.theme, org: { login: orgBody.login ?? orgLogin, name: orgName } },
@@ -117,7 +117,7 @@ export async function buildOrientation(u: McpUniverse): Promise<Orientation> {
       live: { description: "The current, continuously-fresh universe served on the provider hosts (newest activity within hours)." },
       snapshots: {
         description: "Pinned, reproducible universes for CI. A snapshot regenerates byte-identically on every request, so pinned tests never drift.",
-        howToPin: `Point your client's base URL at a snapshot host instead of the live host — e.g. ${snapshotBaseUrl(cfg, "gh-2026-03")}. Use the get_snapshot tool to fetch the exact hostname for a provider.`,
+        howToPin: `Point your client's base URL at a snapshot host instead of the live host, e.g. ${snapshotBaseUrl(cfg, "gh-2026-03")}. Use the get_snapshot tool to fetch the exact hostname for a provider.`,
         available: snapshots,
       },
     },
@@ -134,8 +134,8 @@ export async function buildOrientation(u: McpUniverse): Promise<Orientation> {
     },
     nextSteps: [
       ...MCP_PROVIDERS.flatMap((d) => d.nextSteps(cfg.providers[d.id].baseUrl, orgLogin, flagship)),
-      "Or call the query tools (list_repositories, get_pull_request, search_commits_by_author, …) — results are identical to the REST APIs and carry provider-form ids.",
-      "Before any loop of more than a handful of requests, call check_budget — it is free (the budget endpoint is exempt from the budget it reports) and says how many requests are left in this hour.",
+      "Or call the query tools (list_repositories, get_pull_request, search_commits_by_author, …). Results are identical to the REST APIs and carry provider-form ids.",
+      "Before any loop of more than a handful of requests, call check_budget. It is free (the budget endpoint is exempt from the budget it reports) and says how many requests are left in this hour.",
     ],
   };
 }

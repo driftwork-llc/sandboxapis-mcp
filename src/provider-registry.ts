@@ -137,6 +137,25 @@ export const PROVIDER_REGISTRY: Record<Provider, ProviderRegistryEntry> = {
   // Sentry render the responder-facing half of — one canonical outage, three
   // hosts, and the status page is where a customer reads about it.
   statuspage: { displayName: "Statuspage", category: "observability", launched: "2026-09-06", lifecycle: "live" },
+  // Google Antigravity joins AI telemetry beside Devin and Cursor: a managed
+  // coding agent whose runs, triggers and environments are read through the
+  // Gemini Interactions API. Named by the product served, as `chatgpt` is.
+  // `launched` is the day the provider PR was written; the host serves its rows
+  // from the 2026-10-22 hello-21 cutover, once its DNS record lands.
+  antigravity: { displayName: "Google Antigravity", category: "AI telemetry", launched: "2026-10-22", lifecycle: "live" },
+  // Prometheus joins observability beside Sentry and PagerDuty: the same
+  // incident, as metric series and alerting rules. `launched` is the day the
+  // provider PR was written; the host serves once its DNS record lands.
+  prometheus: { displayName: "Prometheus", category: "observability", launched: "2026-10-23", lifecycle: "live" },
+  // Grafana joins observability over the same incident: dashboards and alert
+  // rules over the Prometheus host's series. `launched` is the day the provider
+  // PR was written; the host serves once its DNS record lands.
+  grafana: { displayName: "Grafana", category: "observability", launched: "2026-10-24", lifecycle: "live" },
+  // Datadog joins observability beside Sentry, PagerDuty and Statuspage: the
+  // same services, the same spike and the same incident, read as monitors,
+  // metric queries, events and Datadog incidents. `launched` is the day the
+  // provider PR was written; the host serves once its DNS record lands.
+  datadog: { displayName: "Datadog", category: "observability", launched: "2026-10-23", lifecycle: "live" },
 };
 
 /** URL-safe slug for a category — the `<h2 id>` anchor and the `?category=`
