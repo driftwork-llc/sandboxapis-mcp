@@ -40,7 +40,7 @@ export interface SnapshotPin {
    *
    *  Generation 12 (hello-20) is the NEWEST, and the one the LIVE hosts rolled
    *  from 2026-09-14 until the 2026-10-22 hello-21 cutover; live has been
-   *  ahead of it since (hello-22 from the 2026-10-24 cutover), and no
+   *  ahead of it since (hello-23 from the 2026-10-27 cutover), and no
    *  generation 13 is minted.
    *  It skips four template versions rather than one, because four cutovers ran
    *  while no generation was being minted, and it carries all four: hello-17's
